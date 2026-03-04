@@ -2,8 +2,11 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
+    - cron: '0 0 * * *'   # runs every day at midnight
+  workflow_dispatch:        # allows manual trigger
+  push:
+    branches:
+      - development         # ✅ triggers on development branch too
 
 jobs:
   ping:
