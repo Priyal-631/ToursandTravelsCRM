@@ -3,19 +3,61 @@ import { useAuth } from './hooks/useAuth';
 import AdminLayout from './layouts/AdminLayout';
 import SalesLayout from './layouts/SalesLayout';
 import Login from './pages/Auth/Login';
+import { getDashboardSummary, getRecentTours } from './api/reports';
 
-// Temporary dashboard to test auth
+// Temporary dashboard to test auth + API
 function TempDashboard() {
   const { profile, logout } = useAuth();
+
+  const testAPI = async () => {
+    try {
+      const summary = await getDashboardSummary();
+      const tours = await getRecentTours();
+      console.log('✅ Dashboard Summary:', summary);
+      console.log('✅ Recent Tours:', tours);
+      alert('API working! Check browser console (F12) for data.');
+    } catch (err) {
+      console.error('❌ API Error:', err.message);
+      alert('API Error: ' + err.message);
+    }
+  };
+
   return (
     <div style={{ padding: '2rem' }}>
       <h2>✅ Logged in successfully!</h2>
       <p>Name: {profile?.full_name}</p>
       <p>Email: {profile?.email}</p>
       <p>Role: {profile?.role}</p>
+
+      {/* ── API Test Button ── */}
+      <button
+        onClick={testAPI}
+        style={{
+          marginTop: '1rem',
+          padding: '0.5rem 1rem',
+          cursor: 'pointer',
+          backgroundColor: '#2563eb',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '6px',
+          marginRight: '1rem',
+        }}
+      >
+        Test API
+      </button>
+
+      {/* ── Logout Button ── */}
       <button
         onClick={logout}
-        style={{ marginTop: '1rem', padding: '0.5rem 1rem', cursor: 'pointer' }}
+        style={{
+          marginTop: '1rem',
+          padding: '0.5rem 1rem',
+          cursor: 'pointer',
+          backgroundColor: '#dc2626',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '6px',
+        }}
       >
         Logout
       </button>
@@ -31,7 +73,11 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route
         path="/unauthorized"
-        element={<div style={{ padding: '2rem' }}>⛔ You are not authorized to view this page.</div>}
+        element={
+          <div style={{ padding: '2rem' }}>
+            ⛔ You are not authorized to view this page.
+          </div>
+        }
       />
 
       {/* ─── Admin Only (role: ADMIN) ───────────────────────────────── */}
