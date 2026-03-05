@@ -1,14 +1,25 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { Navigate, Outlet } from "react-router-dom"
+import { useAuth } from "../hooks/useAuth"
+import Sidebar from "../components/ui/shared/Sidebar"
+import Topbar from "../components/ui/shared/Topbar"
 
 export default function AdminLayout() {
-  const { user, profile, loading, isAdmin } = useAuth();
+  const { user, profile, loading, isAdmin } = useAuth()
 
-  // Wait for profile to load before making any redirect decision
-  if (loading || (user && !profile)) return null; // or a spinner
+  if (loading || (user && !profile)) return null
+  if (!user) return <Navigate to="/login" replace />
+  if (!isAdmin) return <Navigate to="/unauthorized" replace />
 
-  if (!user) return <Navigate to="/login" replace />;
-  if (!isAdmin) return <Navigate to="/unauthorized" replace />;
-
-  return <Outlet />;
+  return (
+    <div className="flex h-screen">
+      <Sidebar />
+ 
+      <div className="flex flex-1 flex-col">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto p-4">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
 }
