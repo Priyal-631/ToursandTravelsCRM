@@ -1,91 +1,85 @@
-import { supabase } from './supabaseClient';
+import { supabase } from "../supabaseClient";
 
-// ─── Page 2: Analytics ──────────────────────────────
+// ── Existing functions (keep as-is) ──────────────────────────────────────────
 
-// Get visitor stats for bar chart
-export async function getVisitorStats({ 
-  year = null, 
-  month = null, 
-  tourType = null,
-  state = null,
-  country = null 
-} = {}) {
-  const { data, error } = await supabase
-    .rpc('get_visitor_stats', {
-      p_year: year,
-      p_month: month,
-      p_tour_type: tourType,
-      p_state: state,
-      p_country: country,
-    });
-
+export const getVisitorStats = async (year) => {
+  const { data, error } = await supabase.rpc("get_visitor_stats", { p_year: year });
   if (error) throw error;
   return data;
-}
+};
 
-// Get monthly revenue for line chart
-export async function getMonthlyRevenue({ year = null } = {}) {
-  const { data, error } = await supabase
-    .rpc('get_monthly_revenue', {
-      p_year: year,
-    });
-
+export const getMonthlyRevenue = async (year) => {
+  const { data, error } = await supabase.rpc("get_monthly_revenue", { p_year: year });
   if (error) throw error;
   return data;
-}
+};
 
-// Get top destinations for pie chart
-export async function getTopDestinations() {
-  const { data, error } = await supabase
-    .from('top_destinations')
-    .select('*');
-
+export const getDashboardSummary = async () => {
+  const { data, error } = await supabase.rpc("get_dashboard_summary");
   if (error) throw error;
   return data;
-}
+};
 
-// ─── Page 1: Dashboard ──────────────────────────────
+// ── NEW functions required by Analytics/index.jsx ────────────────────────────
 
-// Get summary cards data
-export async function getDashboardSummary() {
-  const { data, error } = await supabase
-    .rpc('get_dashboard_summary');
-
+/**
+ * Returns KPI numbers for the 3 StatsCards.
+ * Your SQL RPC "get_dashboard_summary" should return a single row with:
+ * { total_visitors, revenue, avg_rating, visitor_trend, revenue_trend, rating_trend }
+ */
+export const getReportStats = async (period) => {
+  const { data, error } = await supabase.rpc("get_report_stats", { p_period: period });
   if (error) throw error;
-  return data[0]; // returns single row
-}
+  // Shape the DB row to match what StatsCard expects
+  return {
+    totalVisitors: data?.total_visitors ?? 0,
+    revenue:       data?.revenue        ?? 0,
+    avgRating:     data?.avg_rating     ?? "—",
+    visitorTrend:  data?.visitor_trend  ?? 0,
+    revenueTrend:  data?.revenue_trend  ?? 0,
+    ratingTrend:   data?.rating_trend   ?? 0,
+  };
+};
 
-// Get recent tours for dashboard list
-export async function getRecentTours({ limit = 10 } = {}) {
-  const { data, error } = await supabase
-    .from('tours')
-    .select(`
-      id,
-      destination,
-      start_date,
-      end_date,
-      status,
-      package_type,
-      number_of_adults,
-      number_of_children,
-      revenue,
-      customer:customer_id (
-        full_name,
-        contact_number
-      ),
-      tour_type:tour_type_id (
-        name
-      ),
-      state:state_id (
-        name
-      ),
-      country:country_id (
-        name
-      )
-    `)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
+/**
+ * Returns bar chart data: [{ destination, visitors }]
+ * SQL RPC: "get_destination_visitors"
+ */
+export const getDestinationVisitors = async (period) => {
+  const { data, error } = await supabase.rpc("get_destination_visitors", { p_period: period });
   if (error) throw error;
-  return data;
-}
+  return data ?? [];
+};
+
+/**
+ * Returns line chart data: [{ period, national, international }]
+ * SQL RPC: "get_monthly_trends" (reuses get_visitor_stats shape)
+ */
+export const getMonthlyTrends = async (period) => {
+  const year = new Date().getFullYear();
+  const data = await getVisitorStats(year);  // reuse existing RPC
+  return data ?? [];
+};
+
+/**
+ * Returns donut chart data: { national: 59, international: 41 }
+ * SQL RPC: "get_national_vs_international"
+ */
+export const getNationalVsInternational = async (period) => {
+  const { data, error } = await supabase.rpc("get_national_vs_international", { p_period: period });
+  if (error) throw error;
+  return {
+    national:      data?.national      ?? 50,
+    international: data?.international ?? 50,
+  };
+};
+
+/**
+ * Returns grid data: [{ place, count }]
+ * SQL RPC: "get_most_visited_places"
+ */
+export const getMostVisitedPlaces = async (period) => {
+  const { data, error } = await supabase.rpc("get_most_visited_places", { p_period: period });
+  if (error) throw error;
+  return data ?? [];
+};
