@@ -14,3 +14,60 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+# File Tree: ToursandTravelsCRM
+
+└── 📁 ToursandTravelsCRM
+    ├── 📁 src
+    │   ├── 📁 api
+    │   │   ├── 📄 ExportCsv.js
+    │   │   ├── 📄 reports.js
+    │   │   └── 📄 supabaseClient.js
+    │   ├── 📁 components
+    │   │   ├── 📁 ui
+    │   │   │   ├── 📁 shared
+    │   │   │   │   ├── 📄 sidebar.jsx
+    │   │   │   │   └── 📄 topbar.jsx
+    │   │   │   ├── 📄 avatar.jsx
+    │   │   │   ├── 📄 badge.jsx
+    │   │   │   ├── 📄 button.jsx
+    │   │   │   ├── 📄 collapsible.jsx
+    │   │   │   ├── 📄 dropdown-menu.jsx
+    │   │   │   └── 📄 input.jsx
+    │   │   └── 📄 app-sidebar.jsx
+    │   ├── 📁 hooks
+    │   │   └── 📄 useAuth.jsx
+    │   ├── 📁 layouts
+    │   │   ├── 📄 AdminLayout.jsx
+    │   │   └── 📄 SalesLayout.jsx
+    │   ├── 📁 lib
+    │   │   └── 📄 utils.js
+    │   ├── 📁 pages
+    │   │   └── 📁 Auth
+    │   │       ├── 📁 Auth
+    │   │       │   └── 📄 Login.jsx
+    │   │       └── 📁 Dashboard
+    │   │           ├── 📁 Reports
+    │   │           │   └── 📄 ReportsPage.jsx
+    │   │           ├── 📄 Filterbar.jsx
+    │   │           ├── 📄 Index.jsx
+    │   │           ├── 📄 customer-row.jsx
+    │   │           └── 📄 dashboardstats.jsx
+    │   ├── 📁 utils
+    │   │   ├── 📄 dateHelpers.jsx
+    │   │   └── 📄 roleConfig.js
+    │   ├── 📄 App.jsx
+    │   ├── 🎨 index.css
+    │   └── 📄 main.jsx
+    ├── ⚙️ .gitattributes
+    ├── ⚙️ .gitignore
+    ├── 📝 README.md
+    ├── ⚙️ components.json
+    ├── 📄 eslint.config.js
+    ├── 🌐 index.html
+    ├── ⚙️ jsconfig.json
+    ├── ⚙️ package-lock.json
+    ├── ⚙️ package.json
+    ├── 📄 postcss.config.js
+    ├── 📄 tailwind.config.js
+    └── 📄 vite.config.js

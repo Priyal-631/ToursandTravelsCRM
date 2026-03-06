@@ -4,7 +4,7 @@ import { supabase } from '../api/supabaseClient';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser]       = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -53,10 +53,7 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   }
 
@@ -67,27 +64,21 @@ export function AuthProvider({ children }) {
     setProfile(null);
   }
 
-  // Role helper booleans — use these throughout the app
-  const isAdmin = profile?.role === 'ADMIN';
-  const isManager = profile?.role === 'MANAGER';
+  const isAdmin     = profile?.role === 'ADMIN';
+  const isManager   = profile?.role === 'MANAGER';
   const isExecutive = profile?.role === 'EXECUTIVE';
-  const isAccounts = profile?.role === 'ACCOUNTS';
+  const isAccounts  = profile?.role === 'ACCOUNTS';
 
   const value = {
-    user,
-    profile,
-    loading,
-    login,
-    logout,
-    isAdmin,
-    isManager,
-    isExecutive,
-    isAccounts,
+    user, profile, loading,
+    login, logout,
+    isAdmin, isManager, isExecutive, isAccounts,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {/* ✅ Always render children — AdminLayout/SalesLayout handle redirects */}
+      {children}
     </AuthContext.Provider>
   );
 }
