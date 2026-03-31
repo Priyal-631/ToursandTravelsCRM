@@ -2,8 +2,8 @@ import { useState } from "react"
 import { Navigate, Outlet } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 
-import Sidebar from "../components/ui/shared/Sidebar"
-import Topbar from "../components/ui/shared/Topbar"
+import Sidebar from "../components/ui/shared/sidebar"
+import Topbar from "../components/ui/shared/topbar"
 
 export default function AdminLayout() {
   const { user, profile, loading, isAdmin } = useAuth()
