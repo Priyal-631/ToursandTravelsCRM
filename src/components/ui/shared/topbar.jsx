@@ -1,8 +1,10 @@
 import { Bell, Search } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,24 +15,41 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // ── searchQuery + onSearchChange are now controlled from AdminLayout ─
-export default function Topbar({ searchQuery = "", onSearchChange }) {
+export default function Topbar({ searchQuery = "", onSearchChange, showSearch = true }) {
+  const { logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error?.message || error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 gap-4">
+    <header className={`h-14 bg-white border-b border-gray-200 flex items-center px-6 gap-4 ${
+      showSearch ? "justify-between" : "justify-end"
+    }`}>
 
       {/* Search Bar */}
-      <div className="flex-1 max-w-sm">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search by name, email or phone..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange?.(e.target.value)}
-            className="pl-9 h-9 bg-gray-50 border-gray-200 text-sm rounded-lg focus:bg-white transition-colors"
-          />
+      {showSearch && (
+        <div className="flex-1 max-w-sm">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search by name, email or phone..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              className="pl-9 h-9 bg-gray-50 border-gray-200 text-sm rounded-lg focus:bg-white transition-colors"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Right: Bell + Avatar */}
       <div className="flex items-center gap-3">
@@ -68,7 +87,13 @@ export default function Topbar({ searchQuery = "", onSearchChange }) {
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">Log out</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? "Logging out..." : "Log out"}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

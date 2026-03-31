@@ -20,10 +20,8 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
 
-  // ── Search from Topbar via layout context ─────────────────────────
   const { searchQuery = '' } = useOutletContext() || {};
 
-  // ── Fetch customers + nested tours ────────────────────────────────
   useEffect(() => {
     fetchCustomers();
   }, []);
@@ -69,17 +67,14 @@ export default function Dashboard() {
     }
   };
 
-  // ── FilterBar Apply ───────────────────────────────────────────────
   const handleApply = (filters) => {
     setActiveFilters(filters);
   };
 
-  // ── Combined filter + search logic ────────────────────────────────
   useEffect(() => {
     let filtered = [...customers];
     const { from, to, month, year, type, state, destination, country } = activeFilters;
 
-    // Topbar search — name, email, phone, tour destination
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter((c) =>
@@ -146,47 +141,56 @@ export default function Dashboard() {
     setFilteredCustomers(filtered);
   }, [customers, activeFilters, searchQuery]);
 
-  const th = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
+  // ── Compact, truncating header — no whitespace-nowrap so columns don't blow out
+  const th = "px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate";
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-        <p className="text-gray-600 mt-1">Manage and view all customer information</p>
-      </div>
+    // w-full + min-w-0 prevents the flex child from exceeding the layout width
+    <div className="flex flex-col h-full overflow-hidden w-full min-w-0">
 
-      {/* ✅ Stats cards — derives counts from the already-fetched customers */}
-      <DashboardStats customers={customers} />
+      {/* ── Scrollable content area ── */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0 w-full min-w-0">
 
-      <FilterBar onApply={handleApply} />
+        {/* Page header */}
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">Customers</h1>
+          <p className="text-gray-500 text-xs mt-0.5">Manage and view all customer information</p>
+        </div>
 
-      <div className="mt-4 bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+        {/* Stats */}
+        <DashboardStats customers={customers} />
+
+        {/* Filter bar */}
+        <FilterBar onApply={handleApply} />
+
+        {/* Table — overflow-x-auto here lets the table scroll horizontally
+            inside the page instead of pushing the page wider             */}
+        <div className="bg-white rounded-lg shadow border border-gray-100 overflow-x-auto">
+          <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className={th}>Customer</th>
-                <th className={th}>Contact</th>
-                <th className={th}>Destination</th>
-                <th className={th}>Package</th>
-                <th className={th}>Travel Dates</th>
-                <th className={th}>Group Size</th>
-                <th className={th}>Paid</th>
-                <th className={th}>Pending</th>
-                <th className={th}>Tour Status</th>
-                <th className={th}>Notes</th>
+                <th className={`${th} w-[13%]`}>Customer</th>
+                <th className={`${th} w-[12%]`}>Contact</th>
+                <th className={`${th} w-[12%]`}>Destination</th>
+                <th className={`${th} w-[10%]`}>Package</th>
+                <th className={`${th} w-[12%]`}>Travel Dates</th>
+                <th className={`${th} w-[8%]`}>Group</th>
+                <th className={`${th} w-[8%]`}>Paid</th>
+                <th className={`${th} w-[8%]`}>Pending</th>
+                <th className={`${th} w-[9%]`}>Status</th>
+                <th className={`${th} w-[8%]`}>Notes</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
-                    Loading customers...
+                  <td colSpan="10" className="px-6 py-8 text-center text-gray-400 text-sm">
+                    Loading customers…
                   </td>
                 </tr>
               ) : filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="10" className="px-6 py-8 text-center text-gray-400 text-sm">
                     No customers found
                   </td>
                 </tr>
@@ -198,6 +202,7 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   );

@@ -147,7 +147,7 @@ export default function FilterBar({ onApply }) {
     "May", "June", "July", "August", "September",
     "October", "November", "December",
   ];
-  const years = ["All Years", "2024", "2025", "2026", "2027"];
+  const years = ["All Years", "2024", "2025", "2026"];
   const types = ["All Types", "National", "International"];
 
   const handleTypeChange = (v) => {

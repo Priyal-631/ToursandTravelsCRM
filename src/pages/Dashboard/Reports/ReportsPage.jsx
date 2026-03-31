@@ -240,7 +240,8 @@ export default function ReportsPage() {
   );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex flex-col h-full overflow-hidden w-full min-w-0">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0 w-full min-w-0">
 
       {/* Page header */}
       <div>
@@ -349,6 +350,7 @@ export default function ReportsPage() {
         )}
       </ReportSection>
 
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from './layouts/AdminLayout';
 import SalesLayout from './layouts/SalesLayout';
 import Login from './pages/Auth/Login';
@@ -31,9 +31,8 @@ export default function App() {
 
       {/* ─── Sales (role: MANAGER, EXECUTIVE, ACCOUNTS + ADMIN) ──────── */}
       <Route element={<SalesLayout />}>
-        <Route path="/sales/crm"       element={<div style={{ padding: '2rem' }}>CRM Page</div>} />
-        <Route path="/sales/crm/:id"   element={<div style={{ padding: '2rem' }}>Lead Detail Page</div>} />
-        <Route path="/sales/dashboard" element={<Dashboard />} />
+        <Route path="/sales/reports" element={<ReportsPage />} />
+        <Route path="/sales/queries" element={<div style={{ padding: '2rem' }}>Queries Page</div>} />
       </Route>
 
       {/* ─── Fallback ─────────────────────────────────────────────────── */}

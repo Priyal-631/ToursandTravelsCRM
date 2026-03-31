@@ -13,7 +13,7 @@ export default function Login() {
   // Once both user AND profile are loaded, redirect based on role
   if (user && profile) {
     if (isAdmin) return <Navigate to="/admin/dashboard" replace />;
-    return <Navigate to="/sales/crm" replace />;
+    return <Navigate to="/sales/reports" replace />;
   }
 
   async function handleLogin(e) {
