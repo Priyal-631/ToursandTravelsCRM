@@ -25,15 +25,15 @@ function Logo({ isCollapsed }) {
   )
 }
 
-// ── Update paths to match App.jsx routes ──────────────────────────────
-const menuItems = [
+// ── Default admin navigation paths ───────────────────────────────────
+const defaultMenuItems = [
   { label: "Dashboard", path: "/admin/dashboard", icon: Home },
   { label: "Reports",   path: "/admin/reports",   icon: ChartColumn },
   { label: "Customers", path: "/admin/customers", icon: Users },
   { label: "Queries",   path: "/admin/queries",   icon: MessageSquare },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ menuItems = defaultMenuItems }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   return (
