@@ -1,0 +1,26 @@
+{
+  "name": "tours-backend",
+  "version": "1.0.0",
+  "description": "Tours and Travels CRM - Express Backend",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/index.js",
+    "start": "node --env-file=.env src/index.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "csv-parse": "^6.2.1",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "jsonwebtoken": "^9.0.0",
+    "pg": "^8.20.0",
+    "resend": "^1.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^7.6.0"
+  }
+}

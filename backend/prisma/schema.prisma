@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model Profile {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  full_name  String?
+  role       Role     @default(EXECUTIVE)
+  password   String
+  created_at DateTime @default(now())
+
+  customers_assigned Customer[] @relation("AssignedTo")
+  customers_created  Customer[] @relation("CreatedBy")
+  tours_created      Tour[]
+  queries_assigned   Query[]
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EXECUTIVE
+  ACCOUNTS
+}
+
+model Customer {
+  id                 String    @id @default(uuid())
+  full_name          String
+  contact_number     String?
+  whatsapp_number    String?
+  email_id           String?
+  travel_destination String?
+  travel_dates       DateTime?
+  departure_city     String?
+  number_of_adults   Int       @default(1)
+  number_of_children Int       @default(0)
+  package_type       String?
+  budget_range       Decimal?
+  source_of_lead     String?
+  follow_up_status   String    @default("New")
+  follow_up_notes    String?
+  assigned_to        String?
+  created_by         String?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  assignedProfile Profile? @relation("AssignedTo", fields: [assigned_to], references: [id])
+  createdProfile  Profile? @relation("CreatedBy", fields: [created_by], references: [id])
+  tours           Tour[]
+  queries         Query[]
+}
+
+model TourType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  tours Tour[]
+}
+
+model IndianState {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  tours Tour[]
+}
+
+model Country {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  code String?
+  tours Tour[]
+}
+
+model Tour {
+  id                 String   @id @default(uuid())
+  customer_id        String?
+  destination        String
+  tour_type_id       Int?
+  state_id           Int?
+  country_id         Int?
+  start_date         DateTime
+  end_date           DateTime
+  package_type       String?
+  number_of_adults   Int      @default(1)
+  number_of_children Int      @default(0)
+  revenue            Decimal?
+  amount_paid        Decimal  @default(0)
+  status             String   @default("Upcoming")
+  notes              String?
+  created_by         String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  customer  Customer?    @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  tour_type TourType?    @relation(fields: [tour_type_id], references: [id])
+  state     IndianState? @relation(fields: [state_id], references: [id])
+  country   Country?     @relation(fields: [country_id], references: [id])
+  createdBy Profile?     @relation(fields: [created_by], references: [id])
+}
+
+model Query {
+  id          String   @id @default(uuid())
+  customer_id String?
+  subject     String
+  message     String
+  priority    String   @default("Medium")
+  status      String   @default("Open")
+  assigned_to String?
+  reply       String?
+  replied     Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  customer    Customer? @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  assignedTo  Profile?  @relation(fields: [assigned_to], references: [id], onDelete: SetNull)
+}
