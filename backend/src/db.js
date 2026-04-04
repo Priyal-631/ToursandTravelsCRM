@@ -1,8 +1,7 @@
 import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
 
-import pgPkg from '@prisma/adapter-pg';
-const { PrismaPg } = pgPkg;
+import { PrismaPg } from '@prisma/adapter-pg';
 
 import pg from 'pg';
 
