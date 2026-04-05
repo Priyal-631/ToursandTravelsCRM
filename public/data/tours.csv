@@ -1,0 +1,26 @@
+customer_id,destination,tour_type_id,state_id,country_id,start_date,end_date,package_type,number_of_adults,number_of_children,revenue,amount_paid,status,notes
+26d03886-12a1-46b8-8cfe-7daeccaf601a,Goa,1,6,,2025-01-12,2025-01-18,Honeymoon,2,0,45000,45000,Completed,Honeymoon package with beach resort
+c447d172-0166-448d-a601-f2535e21c277,Dubai,2,,86,2025-02-08,2025-02-14,Family,2,1,55000,55000,Completed,Family trip with desert safari
+e33efcd6-c58f-4266-9212-9d53a14583b7,Manali,1,9,,2025-03-15,2025-03-22,Adventure,4,2,65000,65000,Completed,Snow adventure package
+fc5b86cb-2a30-48cc-944c-08e6a9b3c578,Kerala,1,12,,2025-04-10,2025-04-17,Honeymoon,2,0,72000,72000,Completed,Backwaters and houseboat stay
+aead754b-b5a5-457f-ba6f-ae74efabc076,Thailand,2,,81,2025-05-05,2025-05-12,Family,3,1,85000,85000,Completed,Thailand family beach holiday
+6f2b1bb0-6175-4c7c-a797-fabd8162eae9,Kashmir,1,34,,2025-06-02,2025-06-09,Adventure,2,0,58000,58000,Completed,Kashmir valley trekking package
+1ef52583-a132-45f1-a4bc-9ef3e636f947,Singapore,2,,71,2025-07-01,2025-07-08,Custom,5,2,95000,95000,Completed,Singapore city explorer
+1aa08887-c9d9-4bad-a5d0-c7509076d14a,Europe,2,,87,2025-08-12,2025-08-25,Custom,3,1,180000,180000,Completed,Europe multi-city tour
+4cefa74e-b492-49da-9ce8-b71f65095cac,Shimla,1,9,,2025-09-05,2025-09-10,Family,2,0,32000,32000,Completed,Shimla hill station package
+decb341e-9368-455f-b3ba-91eea4ead4be,Maldives,2,,51,2025-10-16,2025-10-22,Custom,4,2,120000,120000,Completed,Maldives luxury overwater villa
+7dc71987-05fe-4677-b738-8876c166608d,Andaman,1,29,,2025-11-08,2025-11-15,Honeymoon,2,0,55000,55000,Completed,Andaman island hopping
+af7e7962-13a9-4b36-b2e9-637ae4d3f687,Rajasthan,1,21,,2025-12-03,2025-12-10,Family,3,1,68000,68000,Completed,Rajasthan heritage tour
+d4330ff6-50d9-4a29-b15b-f6a0a490017c,Ooty,1,23,,2025-12-20,2025-12-25,Custom,4,0,42000,42000,Completed,Ooty hills and tea gardens
+1ef6e20e-af4c-4296-b1b4-664852caef01,Bali,2,,36,2026-01-03,2026-01-10,Adventure,2,2,90000,45000,Upcoming,Bali temples and rice terraces
+04a567b4-66f8-4f6f-afeb-64d629cb52ff,Leh Ladakh,1,35,,2026-01-10,2026-01-18,Custom,6,1,95000,50000,Upcoming,Ladakh bike and jeep expedition
+3284c2b2-36ad-4259-9d38-56f226199aaf,Switzerland,2,,77,2026-01-18,2026-01-28,Family,2,0,150000,75000,Upcoming,Switzerland winter wonderland
+45f0aef0-2a76-48ce-99d3-d58b1ed1f0c9,Varanasi,1,26,,2026-01-25,2026-01-30,Pilgrimage,3,1,38000,20000,Upcoming,Varanasi ghats and temple tour
+227580ce-aa5e-40f9-b3b4-78f05f4d561b,Darjeeling,1,28,,2026-02-02,2026-02-08,Custom,2,0,45000,25000,Upcoming,Darjeeling tea tour and toy train
+5eaf6a45-a879-47f9-92ab-e079fe74036c,Coorg,1,11,,2026-02-05,2026-02-10,Family,4,2,55000,30000,Upcoming,Coorg coffee plantation stay
+e6a49ab5-5a4d-4818-8d62-2fb352186999,Kullu Manali,1,9,,2026-02-09,2026-02-16,Adventure,2,0,48000,25000,Upcoming,Manali snow and adventure sports
+509f836c-c6d6-404e-8f7c-500bc60cd52e,Paris,2,,27,2026-02-12,2026-02-20,Honeymoon,5,1,175000,90000,Upcoming,Paris romantic honeymoon package
+2e35eaf1-48a6-462c-9c55-04ccc7d2ae0a,Mussoorie,1,27,,2026-02-15,2026-02-20,Family,3,2,42000,20000,Upcoming,Mussoorie hill station getaway
+1c89e67a-54ac-450e-be5b-1c431c19e59e,Sri Lanka,2,,75,2026-02-18,2026-02-25,Custom,2,0,78000,40000,Upcoming,Sri Lanka cultural triangle tour
+58e0f4de-83ed-4b3d-b4f8-ba17feb2a336,Himachal Pradesh,1,9,,2026-02-22,2026-03-01,Custom,4,1,62000,35000,Upcoming,Himachal Pradesh complete tour
+b4402c69-ba80-42b9-bd38-28d1224ffcfa,Nepal,2,,57,2026-02-27,2026-03-06,Custom,3,0,52000,25000,Upcoming,Nepal Everest base camp trek
