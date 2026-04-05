@@ -18,11 +18,32 @@ If you are developing a production application, we recommend using TypeScript wi
 # File Tree: ToursandTravelsCRM
 
 └── 📁 ToursandTravelsCRM
+    ├── 📁 server
+    │   ├── 📁 prisma
+    │   │   └── 📄 schema.prisma
+    │   ├── 📁 middleware
+    │   │   └── 📄 auth.js
+    │   ├── 📁 controllers
+    │   │   ├── 📄 auth.js
+    │   │   ├── 📄 customers.js
+    │   │   ├── 📄 leads.js
+    │   │   ├── 📄 email.js
+    │   │   └── 📄 sms.js
+    │   ├── 📁 routes
+    │   │   ├── 📄 auth.js
+    │   │   ├── 📄 customers.js
+    │   │   ├── 📄 leads.js
+    │   │   └── 📄 messaging.js
+    │   ├── 📄 index.js
+    │   ├── 📄 .env
+    │   └── 📄 package.json
     ├── 📁 src
     │   ├── 📁 api
+    │   │   ├── 📄 customers.js
+    │   │   ├── 📄 leads.js
+    │   │   ├── 📄 follow_ups.js
     │   │   ├── 📄 ExportCsv.js
-    │   │   ├── 📄 reports.js
-    │   │   └── 📄 supabaseClient.js
+    │   │   └── 📄 reports.js
     │   ├── 📁 components
     │   │   ├── 📁 ui
     │   │   │   ├── 📁 shared
@@ -36,26 +57,40 @@ If you are developing a production application, we recommend using TypeScript wi
     │   │   │   └── 📄 input.jsx
     │   │   └── 📄 app-sidebar.jsx
     │   ├── 📁 hooks
-    │   │   └── 📄 useAuth.jsx
+    │   │   ├── 📄 useAuth.jsx
+    │   │   ├── 📄 useCustomers.js
+    │   │   └── 📄 useLeads.js
     │   ├── 📁 layouts
     │   │   ├── 📄 AdminLayout.jsx
     │   │   └── 📄 SalesLayout.jsx
     │   ├── 📁 lib
     │   │   └── 📄 utils.js
     │   ├── 📁 pages
-    │   │   └── 📁 Auth
-    │   │       ├── 📁 Auth
-    │   │       │   └── 📄 Login.jsx
-    │   │       └── 📁 Dashboard
-    │   │           ├── 📁 Reports
-    │   │           │   └── 📄 ReportsPage.jsx
-    │   │           ├── 📄 Filterbar.jsx
-    │   │           ├── 📄 Index.jsx
-    │   │           ├── 📄 customer-row.jsx
-    │   │           └── 📄 dashboardstats.jsx
+    │   │   ├── 📁 Auth
+    │   │   │   └── 📄 Login.jsx
+    │   │   ├── 📁 Dashboard
+    │   │   │   ├── 📁 Reports
+    │   │   │   │   └── 📄 ReportsPage.jsx
+    │   │   │   ├── 📄 Filterbar.jsx
+    │   │   │   ├── 📄 Index.jsx
+    │   │   │   ├── 📄 customer-row.jsx
+    │   │   │   └── 📄 dashboardstats.jsx
+    │   │   ├── 📁 Customers
+    │   │   │   ├── 📄 Index.jsx
+    │   │   │   ├── 📄 CustomerTable.jsx
+    │   │   │   ├── 📄 EditForm.jsx
+    │   │   │   └── 📄 FilterBar.jsx
+    │   │   └── 📁 CRM
+    │   │       ├── 📄 Index.jsx
+    │   │       ├── 📄 EnquiryList.jsx
+    │   │       ├── 📄 EnquiryForm.jsx
+    │   │       ├── 📄 LeadDetail.jsx
+    │   │       └── 📄 ReplyModal.jsx
     │   ├── 📁 utils
     │   │   ├── 📄 dateHelpers.jsx
-    │   │   └── 📄 roleConfig.js
+    │   │   ├── 📄 roleConfig.js
+    │   │   ├── 📄 validators.js
+    │   │   └── 📄 exportCSV.js
     │   ├── 📄 App.jsx
     │   ├── 🎨 index.css
     │   └── 📄 main.jsx
