@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { apiClient } from '../api/apiClient';
+import { supabase } from '../api/supabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -8,37 +8,58 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On app load — check if a token exists and restore session
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      apiClient('/api/auth/me')
-        .then(profile => {
-          setUser({ id: profile.id });
-          setProfile(profile);
-        })
-        .catch(() => {
-          // Token is invalid or expired — clear it
-          localStorage.removeItem('token');
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    // Check for existing session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for login/logout events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  async function login(email, password) {
-    const { token, profile } = await apiClient('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    localStorage.setItem('token', token);
-    setUser({ id: profile.id });
-    setProfile(profile);
+  async function fetchProfile(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function logout() {
-    localStorage.removeItem('token');
+  async function login(email, password) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }
+
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
     setUser(null);
     setProfile(null);
   }
@@ -56,6 +77,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
+      {/* ✅ Always render children — AdminLayout/SalesLayout handle redirects */}
       {children}
     </AuthContext.Provider>
   );

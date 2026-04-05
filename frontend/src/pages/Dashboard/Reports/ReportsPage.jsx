@@ -6,12 +6,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Download, TrendingUp, MapPin, BarChart2 } from "lucide-react";
-import { apiClient } from "@/api/apiClient";
+import {
+  getMonthlyRevenue,
+  getVisitorStats,
+  getTopDestinations,
+  getYearlyTrends,
+} from "@/api/reports";
 import { exportCsv } from "@/api/ExportCsv";
 
 // ── Constants ─────────────────────────────────────────────────────────
-const CURRENT_YEAR = new Date().getFullYear();
-const YEAR_OPTIONS = [String(CURRENT_YEAR - 1), String(CURRENT_YEAR), String(CURRENT_YEAR + 1)];
+const CURRENT_YEAR  = new Date().getFullYear();
+const YEAR_OPTIONS  = [String(CURRENT_YEAR - 1), String(CURRENT_YEAR), String(CURRENT_YEAR + 1)];
 
 const MONTH_NAMES = [
   "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -115,34 +120,28 @@ function Empty() {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────
-export default function ReportsPage() {
-
-  // Monthly Revenue
+// ── Monthly tab view ──────────────────────────────────────────────────
+function MonthlyView() {
   const [revenueYear, setRevenueYear]       = useState(String(CURRENT_YEAR));
   const [revenueData, setRevenueData]       = useState([]);
   const [revenueLoading, setRevenueLoading] = useState(true);
 
-  // Visitor Stats
   const [visitorYear, setVisitorYear]       = useState(String(CURRENT_YEAR));
   const [visitorData, setVisitorData]       = useState([]);
   const [visitorLoading, setVisitorLoading] = useState(true);
 
-  // Top Destinations
   const [topData, setTopData]               = useState([]);
   const [topLoading, setTopLoading]         = useState(true);
 
-  // ── Fetch Monthly Revenue ─────────────────────────────────────────
+  // Monthly Revenue
   useEffect(() => {
     const fetch = async () => {
       try {
         setRevenueLoading(true);
-        const raw = await apiClient(
-          `/api/reports/monthly-revenue${revenueYear ? `?year=${revenueYear}` : ''}`
-        );
+        const raw = await getMonthlyRevenue(revenueYear || null);
         setRevenueData(raw.map((r) => ({
           ...r,
-          label:           r.month ? r.month.slice(5, 7).replace(/^0/, '') : '?',
+          label:           MONTH_NAMES[Number(r.month_number)] || "?",
           total_revenue:   Number(r.total_revenue   || 0),
           total_collected: Number(r.total_collected || 0),
           total_pending:   Number(r.total_pending   || 0),
@@ -157,14 +156,13 @@ export default function ReportsPage() {
     fetch();
   }, [revenueYear]);
 
-  // ── Fetch Visitor Stats ───────────────────────────────────────────
+  // Visitor Stats
   useEffect(() => {
     const fetch = async () => {
       try {
         setVisitorLoading(true);
-        const raw = await apiClient(
-          `/api/reports/visitor-stats${visitorYear ? `?year=${visitorYear}` : ''}`
-        );
+        const raw = await getVisitorStats(visitorYear || null);
+
         const map = {};
         raw.forEach((r) => {
           if (!map[r.destination]) {
@@ -173,6 +171,7 @@ export default function ReportsPage() {
           map[r.destination].visitor_count += Number(r.visitor_count || 0);
           map[r.destination].total_revenue += Number(r.total_revenue || 0);
         });
+
         setVisitorData(
           Object.values(map)
             .sort((a, b) => b.visitor_count - a.visitor_count)
@@ -186,12 +185,13 @@ export default function ReportsPage() {
     };
     fetch();
   }, [visitorYear]);
-  // ── Fetch Top Destinations ────────────────────────────────────────
+
+  // Top Destinations
   useEffect(() => {
     const fetch = async () => {
       try {
         setTopLoading(true);
-        const raw = await apiClient('/api/reports/top-destinations');
+        const raw = await getTopDestinations();
         setTopData(raw.map((r) => ({
           ...r,
           total_revenue: Number(r.total_revenue || 0),
@@ -207,51 +207,40 @@ export default function ReportsPage() {
     fetch();
   }, []);
 
-  // ── CSV exports ───────────────────────────────────────────────────
   const exportRevenue = () => exportCsv(
     revenueData.map((r) => ({
-      "Month":            r.label,
-      "Year":             r.year,
-      "Total Tours":      r.total_tours,
-      "Total Revenue":    r.total_revenue,
-      "Collected":        r.total_collected,
-      "Pending":          r.total_pending,
+      "Month":         r.label,
+      "Year":          r.year,
+      "Total Tours":   r.total_tours,
+      "Total Revenue": r.total_revenue,
+      "Collected":     r.total_collected,
+      "Pending":       r.total_pending,
     })),
     `monthly-revenue-${revenueYear || "all"}`
   );
 
   const exportVisitor = () => exportCsv(
     visitorData.map((r) => ({
-      "Destination":      r.destination,
-      "Visitors":         r.visitor_count,
-      "Total Revenue":    r.total_revenue,
+      "Destination":   r.destination,
+      "Visitors":      r.visitor_count,
+      "Total Revenue": r.total_revenue,
     })),
     `visitor-stats-${visitorYear || "all"}`
   );
 
   const exportTop = () => exportCsv(
     topData.map((r) => ({
-      "Destination":      r.destination,
-      "Total Tours":      r.total_tours,
-      "Total Revenue":    r.total_revenue,
-      "Avg Revenue":      Math.round(r.avg_revenue),
+      "Destination":   r.destination,
+      "Total Tours":   r.total_tours,
+      "Total Revenue": r.total_revenue,
+      "Avg Revenue":   Math.round(r.avg_revenue),
     })),
     "top-destinations"
   );
 
   return (
-    <div className="flex flex-col h-full overflow-hidden w-full min-w-0">
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0 w-full min-w-0">
-
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Revenue trends, visitor statistics and destination performance
-        </p>
-      </div>
-
-      {/* ── 1. Monthly Revenue ── */}
+    <div className="space-y-6">
+      {/* 1. Monthly Revenue */}
       <ReportSection
         icon={TrendingUp}
         title="Monthly Revenue"
@@ -269,27 +258,19 @@ export default function ReportsPage() {
               <YAxis tickFormatter={formatINRShort} tick={{ fontSize: 11, fill: "#6b7280" }} width={70} />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line
-                type="monotone" dataKey="total_revenue" name="Total Revenue"
-                stroke="#2F4156" strokeWidth={2.5}
-                dot={{ r: 4, fill: "#2F4156" }} activeDot={{ r: 6 }}
-              />
-              <Line
-                type="monotone" dataKey="total_collected" name="Collected"
-                stroke="#10b981" strokeWidth={2}
-                dot={{ r: 3, fill: "#10b981" }} activeDot={{ r: 5 }}
-              />
-              <Line
-                type="monotone" dataKey="total_pending" name="Pending"
+              <Line type="monotone" dataKey="total_revenue"   name="Total Revenue"
+                stroke="#2F4156" strokeWidth={2.5} dot={{ r: 4, fill: "#2F4156" }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="total_collected" name="Collected"
+                stroke="#10b981" strokeWidth={2}   dot={{ r: 3, fill: "#10b981" }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="total_pending"   name="Pending"
                 stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5"
-                dot={{ r: 3, fill: "#ef4444" }} activeDot={{ r: 5 }}
-              />
+                dot={{ r: 3, fill: "#ef4444" }} activeDot={{ r: 5 }} />
             </LineChart>
           </ResponsiveContainer>
         )}
       </ReportSection>
 
-      {/* ── 2. Visitor Stats ── */}
+      {/* 2. Visitor Stats */}
       <ReportSection
         icon={BarChart2}
         title="Visitor Stats by Destination"
@@ -303,11 +284,8 @@ export default function ReportsPage() {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={visitorData} margin={{ top: 5, right: 20, left: 10, bottom: 50 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis
-                dataKey="destination"
-                tick={{ fontSize: 11, fill: "#6b7280" }}
-                angle={-35} textAnchor="end" interval={0}
-              />
+              <XAxis dataKey="destination" tick={{ fontSize: 11, fill: "#6b7280" }}
+                angle={-35} textAnchor="end" interval={0} />
               <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} allowDecimals={false} />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
@@ -317,7 +295,7 @@ export default function ReportsPage() {
         )}
       </ReportSection>
 
-      {/* ── 3. Top Destinations ── */}
+      {/* 3. Top Destinations */}
       <ReportSection
         icon={MapPin}
         title="Top Destinations"
@@ -327,20 +305,13 @@ export default function ReportsPage() {
       >
         {topData.length === 0 ? <Empty /> : (
           <ResponsiveContainer width="100%" height={320}>
-            <BarChart
-              data={topData}
-              layout="vertical"
-              margin={{ top: 5, right: 30, left: 110, bottom: 5 }}
-            >
+            <BarChart data={topData} layout="vertical"
+              margin={{ top: 5, right: 30, left: 110, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-              <XAxis
-                type="number" tickFormatter={formatINRShort}
-                tick={{ fontSize: 11, fill: "#6b7280" }}
-              />
-              <YAxis
-                type="category" dataKey="destination" width={100}
-                tick={{ fontSize: 11, fill: "#6b7280" }}
-              />
+              <XAxis type="number" tickFormatter={formatINRShort}
+                tick={{ fontSize: 11, fill: "#6b7280" }} />
+              <YAxis type="category" dataKey="destination" width={100}
+                tick={{ fontSize: 11, fill: "#6b7280" }} />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
               <Bar dataKey="total_revenue" name="Total Revenue" fill="#2F4156" radius={[0, 4, 4, 0]} />
@@ -349,6 +320,137 @@ export default function ReportsPage() {
           </ResponsiveContainer>
         )}
       </ReportSection>
+    </div>
+  );
+}
+
+// ── Yearly tab view ───────────────────────────────────────────────────
+function YearlyView() {
+  const [yearlyData, setYearlyData]     = useState([]);
+  const [yearlyLoading, setYearlyLoad]  = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        setYearlyLoad(true);
+        const raw = await getYearlyTrends();
+        setYearlyData(raw);
+      } catch (err) {
+        console.error("Yearly trends error:", err.message);
+      } finally {
+        setYearlyLoad(false);
+      }
+    };
+    fetch();
+  }, []);
+
+  const exportYearly = () => exportCsv(
+    yearlyData.map(r => ({
+      "Year":          r.year,
+      "National":      r.national,
+      "International": r.international,
+    })),
+    "yearly-trends"
+  );
+
+  return (
+    <ReportSection
+      icon={TrendingUp}
+      title="Yearly Trends"
+      subtitle="National vs International tours by year"
+      onExport={exportYearly}
+      loading={yearlyLoading}
+    >
+      {yearlyData.length === 0 ? <Empty /> : (
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart
+            data={yearlyData}
+            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+            <XAxis
+              dataKey="year"
+              tick={{ fontSize: 13, fill: "#6b7280" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fontSize: 12, fill: "#6b7280" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              cursor={{ fill: "rgba(0,0,0,0.04)" }}
+              content={<CustomTooltip />}
+            />
+            <Legend
+              wrapperStyle={{ fontSize: 13, paddingTop: 16 }}
+              formatter={(value) => (
+                <span style={{ color: "#374151" }}>{value}</span>
+              )}
+            />
+            {/* National — slate/dark blue matching brand */}
+            <Bar
+              dataKey="national"
+              name="national"
+              fill="#567C8D"
+              radius={[4, 4, 0, 0]}
+              barSize={60}
+            />
+            {/* International — warm amber */}
+            <Bar
+              dataKey="international"
+              name="international"
+              fill="#F5A623"
+              radius={[4, 4, 0, 0]}
+              barSize={60}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </ReportSection>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────
+export default function ReportsPage() {
+  // "monthly" | "yearly"
+  const [activeTab, setActiveTab] = useState("monthly");
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden w-full min-w-0">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0 w-full min-w-0">
+
+        {/* ── Page header with Monthly / Yearly toggle ── */}
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Reports &amp; Analytics</h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Visual business intelligence at your fingertips
+            </p>
+          </div>
+
+          {/* Toggle pill */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
+            {["monthly", "yearly"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-1.5 rounded-md text-sm font-semibold transition-all duration-150 capitalize ${
+                  activeTab === tab
+                    ? "bg-[#2F4156] text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Tab content ── */}
+        {activeTab === "monthly" ? <MonthlyView /> : <YearlyView />}
 
       </div>
     </div>

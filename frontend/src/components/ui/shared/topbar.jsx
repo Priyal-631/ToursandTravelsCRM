@@ -15,9 +15,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // ── searchQuery + onSearchChange are now controlled from AdminLayout ─
-export default function Topbar({ searchQuery = "", onSearchChange, showSearch = true }) {
-  const { logout } = useAuth();
+export default function Topbar({
+  searchQuery = "",
+  onSearchChange,
+  showSearch = true,
+  roleLabel,
+  avatarInitials,
+}) {
+  const { logout, profile } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const displayRole = roleLabel ?? profile?.role ?? "USER";
+  const displayInitials = avatarInitials ?? displayRole.slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -75,10 +84,10 @@ export default function Topbar({ searchQuery = "", onSearchChange, showSearch = 
             >
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">
-                  AD
+                  {displayInitials}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium text-gray-700">Admin</span>
+              <span className="text-sm font-medium text-gray-700">{displayRole}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">

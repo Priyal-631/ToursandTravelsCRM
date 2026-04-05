@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { apiClient } from '@/api/apiClient';
+import { supabase } from '@/api/supabaseClient';
 import DashboardStats from './dashboardstats';
 import FilterBar from './Filterbar';
 import CustomerRow from './customer-row';
@@ -29,11 +29,39 @@ export default function Dashboard() {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      // ── Calls GET /api/customers on Express backend ──────────────
-      const data = await apiClient('/api/customers');
+      const { data, error } = await supabase
+        .from('customers')
+        .select(`
+          id,
+          full_name,
+          contact_number,
+          whatsapp_number,
+          email_id,
+          departure_city,
+          follow_up_status,
+          created_at,
+          tours (
+            destination,
+            package_type,
+            start_date,
+            end_date,
+            number_of_adults,
+            number_of_children,
+            amount_paid,
+            amount_pending,
+            status,
+            notes,
+            tour_type:tour_type_id ( name ),
+            state:state_id ( name ),
+            country:country_id ( name )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
       setCustomers(data || []);
     } catch (error) {
-      console.error('Error fetching customers:', error.message);
+      console.error('Error fetching customers:', error);
     } finally {
       setLoading(false);
     }
@@ -113,20 +141,30 @@ export default function Dashboard() {
     setFilteredCustomers(filtered);
   }, [customers, activeFilters, searchQuery]);
 
+  // ── Compact, truncating header — no whitespace-nowrap so columns don't blow out
   const th = "px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate";
 
   return (
+    // w-full + min-w-0 prevents the flex child from exceeding the layout width
     <div className="flex flex-col h-full overflow-hidden w-full min-w-0">
+
+      {/* ── Scrollable content area ── */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0 w-full min-w-0">
 
+        {/* Page header */}
         <div>
           <h1 className="text-xl font-bold text-gray-900 leading-tight">Customers</h1>
           <p className="text-gray-500 text-xs mt-0.5">Manage and view all customer information</p>
         </div>
 
+        {/* Stats */}
         <DashboardStats customers={customers} />
+
+        {/* Filter bar */}
         <FilterBar onApply={handleApply} />
 
+        {/* Table — overflow-x-auto here lets the table scroll horizontally
+            inside the page instead of pushing the page wider             */}
         <div className="bg-white rounded-lg shadow border border-gray-100 overflow-x-auto">
           <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">

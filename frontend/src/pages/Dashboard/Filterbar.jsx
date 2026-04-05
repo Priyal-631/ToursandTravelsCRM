@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { apiClient } from "@/api/apiClient";
+import { supabase } from "@/api/supabaseClient";
 
 const IconCalendar = () => (
   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -104,11 +104,15 @@ export default function FilterBar({ onApply }) {
   const [loadingStates, setLoadingStates]       = useState(true);
   const [loadingCountries, setLoadingCountries] = useState(true);
 
-  // ── Fetch states from Express backend ──────────────────────────────
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const data = await apiClient("/api/states");
+        const { data, error } = await supabase
+          .from("indian_states")
+          .select("name")
+          .order("name", { ascending: true })
+          .limit(50);
+        if (error) throw error;
         setStateOptions(["All States", ...data.map(s => s.name)]);
       } catch (err) {
         console.error("States fetch failed:", err.message);
@@ -119,11 +123,15 @@ export default function FilterBar({ onApply }) {
     fetchStates();
   }, []);
 
-  // ── Fetch countries from Express backend ───────────────────────────
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const data = await apiClient("/api/countries");
+        const { data, error } = await supabase
+          .from("countries")
+          .select("name")
+          .order("name", { ascending: true })
+          .limit(300);
+        if (error) throw error;
         setCountryOptions(["All Countries", ...data.map(c => c.name)]);
       } catch (err) {
         console.error("Countries fetch failed:", err.message);

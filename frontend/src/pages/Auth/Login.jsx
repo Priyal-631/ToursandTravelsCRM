@@ -35,7 +35,7 @@ export default function Login() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Sukhi Travels CRM</h2>
+        <h2 style={styles.title}>Tours & Travels CRM</h2>
         <p style={styles.subtitle}>Sign in to your account</p>
 
         {error && (
