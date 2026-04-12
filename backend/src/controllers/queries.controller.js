@@ -6,11 +6,18 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 // GET /api/queries
 export const getQueries = async (req, res) => {
   try {
+    const { priority, status, assigned_to } = req.query
+
+    const where = {}
+    if (priority && priority !== 'All Priority') where.priority = priority
+    if (status && status !== 'All Status') where.status = status
+    if (assigned_to && assigned_to !== 'All Members') where.assigned_to = assigned_to
+
     const queries = await prisma.query.findMany({
+      where,
       orderBy: { created_at: 'desc' },
       include: {
         customer: true,
-        // CHANGED: assignedTo -> assigned_member (to match updated schema)
         assigned_member: {
           select: { id: true, full_name: true, email: true }
         }
@@ -23,7 +30,7 @@ export const getQueries = async (req, res) => {
   }
 }
 
-// POST /api/queries
+// POST /api/queries (Public - from enquiry form)
 export const createQuery = async (req, res) => {
   const { customer_id, subject, message, priority } = req.body
   try {
@@ -32,8 +39,7 @@ export const createQuery = async (req, res) => {
 
     const query = await prisma.query.create({
       data: {
-        // Ensure customer_id is a string as per your NOT NULL schema requirement
-        customer_id: customer_id, 
+        customer_id: customer_id,
         subject,
         message,
         priority: priority || 'Medium',
@@ -46,7 +52,7 @@ export const createQuery = async (req, res) => {
   }
 }
 
-// PATCH /api/queries/:id
+// PATCH /api/queries/:id (Update priority, status, assigned_to, or replied_at)
 export const updateQuery = async (req, res) => {
   const { id } = req.params
   try {
@@ -55,7 +61,6 @@ export const updateQuery = async (req, res) => {
       data: req.body,
       include: {
         customer: true,
-        // CHANGED: assignedTo -> assigned_member
         assigned_member: { select: { id: true, full_name: true } }
       }
     })
@@ -68,10 +73,10 @@ export const updateQuery = async (req, res) => {
   }
 }
 
-// POST /api/queries/:id/reply
+// POST /api/queries/:id/reply (Send email via Resend)
 export const sendReply = async (req, res) => {
   const { id } = req.params
-  const { reply } = req.body
+  const { reply, status } = req.body
 
   if (!reply?.trim())
     return res.status(400).json({ error: 'Reply text is required' })
@@ -84,26 +89,47 @@ export const sendReply = async (req, res) => {
 
     if (!query) return res.status(404).json({ error: 'Query not found' })
 
+    // Send email via Resend
     if (query.customer?.email_id) {
-      await resend.emails.send({
-        from: 'support@sukhitravels.com',
-        to: query.customer.email_id,
-        subject: `Re: ${query.subject}`,
-        text: reply,
-      })
+      try {
+        await resend.emails.send({
+          from: 'onboarding@resend.dev', // Use your verified domain
+          to: query.customer.email_id,
+          subject: `Re: ${query.subject}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2F4156;">Sukhi Travels - Response to Your Query</h2>
+              <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0; color: #666; font-size: 14px;"><strong>Your Query:</strong></p>
+                <p style="margin: 5px 0 0 0; color: #333;">${query.message}</p>
+              </div>
+              <div style="margin: 20px 0;">
+                <p style="margin: 0; color: #666; font-size: 14px;"><strong>Our Response:</strong></p>
+                <p style="margin: 10px 0; color: #333; line-height: 1.6;">${reply.replace(/\n/g, '<br>')}</p>
+              </div>
+              <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+              <p style="color: #999; font-size: 12px; text-align: center;">
+                This email was sent by Sukhi Travels. For any further queries, please reply to this email.
+              </p>
+            </div>
+          `
+        })
+      } catch (emailError) {
+        console.error('Resend email error:', emailError)
+        // Continue even if email fails - we still want to save the reply
+      }
     }
 
+    // Update query with reply
     const updated = await prisma.query.update({
       where: { id },
-      data: { 
-        reply, 
-        // CHANGED: replied: true -> replied_at: new Date()
-        replied_at: new Date(), 
-        status: 'Closed' 
+      data: {
+        reply,
+        replied_at: new Date(),
+        status: status || 'Closed'
       },
       include: {
         customer: true,
-        // CHANGED: assignedTo -> assigned_member
         assigned_member: { select: { id: true, full_name: true } }
       }
     })

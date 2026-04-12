@@ -27,7 +27,7 @@ export const createQuery = (data) =>
 
 /**
  * PATCH /api/queries/:id
- * Handles inline updates for priority, status, or assigning a member.
+ * Handles inline updates for priority, status, assigned_to, or replied_at.
  */
 export const updateQuery = (id, data) =>
   apiClient(`/api/queries/${id}`, {
@@ -37,12 +37,15 @@ export const updateQuery = (id, data) =>
 
 /**
  * POST /api/queries/:id/reply
- * Triggers the Resend email integration and updates 'replied_at' timestamp.
+ * Triggers the Resend email integration and updates replied_at timestamp.
+ * @param {string} id - Query ID
+ * @param {string} reply - Reply message text
+ * @param {string} status - Optional status update (defaults to 'Closed')
  */
-export const sendReply = (id, reply) =>
+export const sendReply = (id, reply, status = 'Closed') =>
   apiClient(`/api/queries/${id}/reply`, {
     method: 'POST',
-    body: JSON.stringify({ reply }),
+    body: JSON.stringify({ reply, status }),
   })
 
 /**
