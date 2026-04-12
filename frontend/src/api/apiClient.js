@@ -10,9 +10,18 @@ export const apiClient = async (endpoint, options = {}) => {
       ...options.headers
     }
   })
+  const payload = await res.json().catch(() => null)
+
   if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.error || 'Request failed')
+    throw new Error(payload?.message || payload?.error || 'Request failed')
   }
-  return res.json()
+
+  if (payload && typeof payload === 'object' && 'success' in payload) {
+    if (!payload.success) {
+      throw new Error(payload.message || 'Request failed')
+    }
+    return payload.data
+  }
+
+  return payload
 }

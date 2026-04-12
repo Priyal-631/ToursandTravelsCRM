@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken'
 import { prisma } from '../db.js'
+import { sendError } from '../utils/http.js'
 
 export const requireAuth = async (req, res, next) => {
   const header = req.headers.authorization
 
   if (!header || !header.startsWith('Bearer '))
-    return res.status(401).json({ error: 'No token provided' })
+    return sendError(res, 'No token provided', 401)
 
   const token = header.split(' ')[1]
 
@@ -17,11 +18,11 @@ export const requireAuth = async (req, res, next) => {
     })
 
     if (!profile)
-      return res.status(401).json({ error: 'User not found' })
+      return sendError(res, 'User not found', 401)
 
     req.profile = profile
     next()
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' })
+    return sendError(res, 'Invalid or expired token', 401)
   }
 }

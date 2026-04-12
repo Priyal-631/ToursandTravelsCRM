@@ -1,4 +1,6 @@
 import { prisma } from '../db.js'
+import { sendError, sendSuccess } from '../utils/http.js'
+import { serialize } from '../utils/serializers.js'
 
 export const getMonthlyRevenue = async (req, res) => {
   try {
@@ -34,12 +36,14 @@ export const getMonthlyRevenue = async (req, res) => {
       grouped[key].total_tours += 1
     })
 
-    res.json(
-      Object.values(grouped).sort((a, b) => a.month.localeCompare(b.month))
+    return sendSuccess(
+      res,
+      serialize(Object.values(grouped).sort((a, b) => a.month.localeCompare(b.month))),
+      'Monthly revenue fetched successfully'
     )
   } catch (err) {
     console.error('Monthly revenue error:', err)
-    res.status(500).json({ error: 'Failed to fetch monthly revenue' })
+    return sendError(res, 'Failed to fetch monthly revenue', 500)
   }
 }
 
@@ -79,10 +83,10 @@ export const getVisitorStats = async (req, res) => {
       grouped[dest].total_pending += rev - paid
     })
 
-    res.json(Object.values(grouped))
+    return sendSuccess(res, serialize(Object.values(grouped)), 'Visitor stats fetched successfully')
   } catch (err) {
     console.error('Visitor stats error:', err)
-    res.status(500).json({ error: 'Failed to fetch visitor stats' })
+    return sendError(res, 'Failed to fetch visitor stats', 500)
   }
 }
 
@@ -112,9 +116,9 @@ export const getTopDestinations = async (req, res) => {
       .sort((a, b) => b.total_tours - a.total_tours)
       .slice(0, 10)
 
-    res.json(result)
+    return sendSuccess(res, serialize(result), 'Top destinations fetched successfully')
   } catch (err) {
     console.error('Top destinations error:', err)
-    res.status(500).json({ error: 'Failed to fetch top destinations' })
+    return sendError(res, 'Failed to fetch top destinations', 500)
   }
 }

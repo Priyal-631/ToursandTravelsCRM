@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../db.js'
+import { sendError, sendSuccess } from '../utils/http.js'
+import { serialize } from '../utils/serializers.js'
 
 // POST /api/auth/login
 export const login = async (req, res) => {
@@ -8,15 +10,15 @@ export const login = async (req, res) => {
 
   try {
     if (!email || !password)
-      return res.status(400).json({ error: 'Email and password required' })
+      return sendError(res, 'Email and password required', 400)
 
     const profile = await prisma.profile.findUnique({ where: { email } })
     if (!profile)
-      return res.status(401).json({ error: 'Invalid credentials' })
+      return sendError(res, 'Invalid credentials', 401)
 
     const valid = await bcrypt.compare(password, profile.password)
     if (!valid)
-      return res.status(401).json({ error: 'Invalid credentials' })
+      return sendError(res, 'Invalid credentials', 401)
 
     const token = jwt.sign(
       { id: profile.id, role: profile.role },
@@ -27,20 +29,24 @@ export const login = async (req, res) => {
     // Strip password before sending profile back
     const { password: _, ...safeProfile } = profile
 
-    res.json({ token, profile: safeProfile })
+    return sendSuccess(
+      res,
+      { token, profile: serialize(safeProfile) },
+      'Logged in successfully'
+    )
   } catch (err) {
     console.error('Login error:', err)
-    res.status(500).json({ error: 'Internal server error' })
+    return sendError(res, 'Internal server error', 500)
   }
 }
 
 // GET /api/auth/me
 export const getMe = async (req, res) => {
   const { password: _, ...safeProfile } = req.profile
-  res.json(safeProfile)
+  return sendSuccess(res, serialize(safeProfile), 'Profile fetched successfully')
 }
 
 // POST /api/auth/logout
 export const logout = (req, res) => {
-  res.json({ message: 'Logged out successfully' })
+  return sendSuccess(res, null, 'Logged out successfully')
 }
