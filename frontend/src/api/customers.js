@@ -19,7 +19,7 @@
  *   country_id   (FK → countries.id)
  */
 
-import { supabase } from "@/api/supabaseClient"
+import { apiClient } from "@/api/apiClient";
 
 // ── Shared select string (mirrors Dashboard query) ────────────────────
 const CUSTOMER_SELECT = `

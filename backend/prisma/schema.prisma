@@ -3,28 +3,20 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model Profile {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  full_name  String?
-  role       Role     @default(EXECUTIVE)
-  password   String
-  created_at DateTime @default(now())
-
-  customers_assigned Customer[] @relation("AssignedTo")
-  customers_created  Customer[] @relation("CreatedBy")
-  tours_created      Tour[]
-  queries_assigned   Query[]
-}
-
-enum Role {
-  ADMIN
-  MANAGER
-  EXECUTIVE
-  ACCOUNTS
+  id                String     @id @default(uuid())
+  email             String     @unique
+  full_name         String?
+  role              String     @default("Sales")
+  password          String
+  created_at        DateTime   @default(now())
+  user_id           String?    @unique
+  created_customers Customer[] @relation("CustomerCreator")
+  assigned_queries  Query[]
+  created_tours     Tour[]
 }
 
 model Customer {
@@ -46,35 +38,53 @@ model Customer {
   assigned_to        String?
   created_by         String?
   created_at         DateTime  @default(now())
-  updated_at         DateTime  @updatedAt
+  updated_at         DateTime  @default(now()) @updatedAt
+  creator            Profile?  @relation("CustomerCreator", fields: [created_by], references: [id])
+  queries            Query[]
+  tours              Tour[]
 
-  assignedProfile Profile? @relation("AssignedTo", fields: [assigned_to], references: [id])
-  createdProfile  Profile? @relation("CreatedBy", fields: [created_by], references: [id])
-  tours           Tour[]
-  queries         Query[]
+  @@map("Customer")
+}
+
+model Query {
+  id              String    @id @default(uuid())
+  customer_id     String
+  subject         String
+  message         String
+  priority        String    @default("Medium")
+  status          String    @default("Open")
+  assigned_to     String?
+  reply           String?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+  replied_at      DateTime?
+  assigned_member Profile?  @relation(fields: [assigned_to], references: [id])
+  customer        Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  @@map("Query")
 }
 
 model TourType {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id    Int    @id @default(autoincrement())
+  name  String @unique
   tours Tour[]
 }
 
 model IndianState {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id    Int    @id @default(autoincrement())
+  name  String @unique
   tours Tour[]
 }
 
 model Country {
-  id   Int    @id @default(autoincrement())
-  name String @unique
-  code String?
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  code  String?
   tours Tour[]
 }
 
 model Tour {
-  id                 String   @id @default(uuid())
+  id                 String       @id @default(uuid())
   customer_id        String?
   destination        String
   tour_type_id       Int?
@@ -83,36 +93,26 @@ model Tour {
   start_date         DateTime
   end_date           DateTime
   package_type       String?
-  number_of_adults   Int      @default(1)
-  number_of_children Int      @default(0)
+  number_of_adults   Int          @default(1)
+  number_of_children Int          @default(0)
   revenue            Decimal?
-  amount_paid        Decimal  @default(0)
-  status             String   @default("Upcoming")
+  amount_paid        Decimal      @default(0)
+  status             String       @default("Upcoming")
   notes              String?
   created_by         String?
-  created_at         DateTime @default(now())
-  updated_at         DateTime @updatedAt
-
-  customer  Customer?    @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  tour_type TourType?    @relation(fields: [tour_type_id], references: [id])
-  state     IndianState? @relation(fields: [state_id], references: [id])
-  country   Country?     @relation(fields: [country_id], references: [id])
-  createdBy Profile?     @relation(fields: [created_by], references: [id])
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @updatedAt
+  amount_pending     Decimal?     @default(0.00) @db.Decimal(10, 2)
+  country            Country?     @relation(fields: [country_id], references: [id])
+  createdBy          Profile?     @relation(fields: [created_by], references: [id])
+  customer           Customer?    @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  state              IndianState? @relation(fields: [state_id], references: [id])
+  tour_type          TourType?    @relation(fields: [tour_type_id], references: [id])
 }
 
-model Query {
-  id          String   @id @default(uuid())
-  customer_id String?
-  subject     String
-  message     String
-  priority    String   @default("Medium")
-  status      String   @default("Open")
-  assigned_to String?
-  reply       String?
-  replied     Boolean  @default(false)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  customer    Customer? @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  assignedTo  Profile?  @relation(fields: [assigned_to], references: [id], onDelete: SetNull)
+enum Role {
+  ADMIN
+  MANAGER
+  EXECUTIVE
+  ACCOUNTS
 }

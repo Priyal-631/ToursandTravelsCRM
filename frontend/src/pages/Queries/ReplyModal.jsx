@@ -1,110 +1,117 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { updateQuery } from '../../api/queries';
 
-/**
- * Props:
- *   query      — the query object
- *   onClose    — close without sending
- *   onReplied  — called when Send is hit WITH "Mark as Replied" checked;
- *                marks the query replied and closes the modal
- */
-export default function ReplyModal({ query, onClose, onReplied }) {
-  const [reply, setReply]      = useState('');
-  const [markReplied, setMark] = useState(false);
+const ReplyModal = ({ query, onClose, onSuccess }) => {
+  const [reply, setReply] = useState(query.reply || '');
+  const [status, setStatus] = useState(query.status);
+  const [loading, setLoading] = useState(false);
 
-  const handleSend = () => {
-    if (!reply.trim()) return;
-    console.log('Reply sent:', {
-      to: query.customer,
-      subject: query.subject,
-      message: reply,
-      markReplied,
-    });
-    if (markReplied && onReplied) {
-      onReplied(); // marks query replied + closes modal
-    } else {
-      onClose();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      await updateQuery(query.id, {
+        reply,
+        status
+      });
+      onSuccess();
+    } catch (error) {
+      console.error('Error replying to query:', error);
+      alert('Failed to send reply');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.35)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="bg-[#F5EFEB] rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+        <h2 className="text-xl font-bold mb-4">
+          {query.reply ? 'View Reply' : 'Reply to Query'}
+        </h2>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8dfd8]">
-          <h2 className="text-base font-semibold text-[#2F4156]">Reply to {query.customer}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        {/* Customer Info */}
+        <div className="mb-4 p-4 bg-gray-50 rounded">
+          <p className="font-semibold">{query.customer?.full_name}</p>
+          <p className="text-sm text-gray-600">{query.customer?.email_id}</p>
+          <p className="text-sm text-gray-600">{query.customer?.contact_number}</p>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        {/* Query Details */}
+        <div className="mb-4">
+          <p className="font-semibold text-gray-700">Subject:</p>
+          <p className="text-gray-900">{query.subject}</p>
+        </div>
 
-          {/* Original message */}
-          <div className="bg-white rounded-xl px-4 py-3 border border-[#e8dfd8]">
-            <p className="text-sm font-semibold text-[#2F4156] mb-1">{query.subject}</p>
-            <p className="text-sm text-gray-500 leading-relaxed">{query.message}</p>
-          </div>
+        <div className="mb-4">
+          <p className="font-semibold text-gray-700">Message:</p>
+          <p className="text-gray-900">{query.message}</p>
+        </div>
 
-          {/* Textarea */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[#2F4156]">Your Reply</label>
+        <form onSubmit={handleSubmit}>
+          {/* Reply */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Reply
+            </label>
             <textarea
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              placeholder="Type your reply here…"
               rows={5}
-              className="w-full border border-[#e8dfd8] rounded-xl px-4 py-3 text-sm text-gray-700 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#567C8D]/30 focus:border-[#567C8D] transition-colors"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Type your reply here..."
+              required
+              disabled={!!query.reply} // Disable if already replied
             />
           </div>
 
-          {/* Mark as replied toggle */}
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <button
-              type="button"
-              onClick={() => setMark(!markReplied)}
-              className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-                markReplied ? 'bg-[#567C8D] border-[#567C8D]' : 'border-gray-300 bg-white hover:border-[#567C8D]'
-              }`}
+          {/* Status */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg"
+              disabled={!!query.reply}
             >
-              {markReplied && (
-                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </button>
-            <span className="text-sm text-gray-700">Mark as Replied</span>
-          </label>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Closed">Closed</option>
+            </select>
+          </div>
+
+          {query.replied_at && (
+            <div className="mb-4 text-sm text-gray-600">
+              Replied on: {new Date(query.replied_at).toLocaleString()}
+            </div>
+          )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-white rounded-lg border border-transparent hover:border-[#e8dfd8] transition-colors"
+              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
             >
-              Cancel
+              {query.reply ? 'Close' : 'Cancel'}
             </button>
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!reply.trim()}
-              className="flex items-center gap-2 px-5 py-2 bg-[#567C8D] hover:bg-[#2F4156] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              Send Reply
-            </button>
+            {!query.reply && (
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {loading ? 'Sending...' : 'Send Reply'}
+              </button>
+            )}
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
-}
+};
+
+export default ReplyModal;

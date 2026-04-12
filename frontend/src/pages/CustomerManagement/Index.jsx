@@ -4,6 +4,7 @@
  * Customer Management page (Admin only route: /admin/customers)
  *
  * Fixes in this version:
+ *  - Replaced all direct `supabase` calls with `apiClient` (REST-based)
  *  - Tour data (Destination, Package, Dates, Group, Paid, Pending, Status, Notes)
  *    is correctly inserted via addCustomer() which writes to both customers + tours tables
  *  - Actions column (Edit / Delete) wired through CustomerRow → onUpdated / onDeleted
@@ -15,7 +16,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { supabase } from '@/api/supabaseClient';
+import { apiClient } from "@/api/apiClient";
 import { addCustomer } from '@/api/customers';
 import { exportCsv } from '@/api/ExportCsv';
 import DashboardStats from '@/pages/Dashboard/dashboardstats';
@@ -30,56 +31,28 @@ const MONTH_INDEX = {
   September: 8, October: 9, November: 10, December: 11,
 };
 
-// ── Shared Supabase select ────────────────────────────────────────────
-const CUSTOMER_SELECT = `
-  id,
-  full_name,
-  contact_number,
-  whatsapp_number,
-  email_id,
-  departure_city,
-  follow_up_status,
-  created_at,
-  tours (
-    id,
-    destination,
-    package_type,
-    start_date,
-    end_date,
-    number_of_adults,
-    number_of_children,
-    amount_paid,
-    amount_pending,
-    status,
-    notes,
-    tour_type:tour_type_id ( name ),
-    state:state_id ( name ),
-    country:country_id ( name )
-  )
-`;
-
 // ── CSV export (dates already formatted by ExportCsv.js) ─────────────
 function handleExportCsv(customers) {
   if (!customers.length) return;
   const rows = customers.map(c => {
     const t = c.tours?.[0] ?? {};
     return {
-      'Name':         c.full_name        || '',
-      'Contact':      c.contact_number   || '',
-      'WhatsApp':     c.whatsapp_number  || '',
-      'Email':        c.email_id         || '',
-      'City':         c.departure_city   || '',
-      'Follow-up':    c.follow_up_status || '',
-      'Destination':  t.destination      || '',
-      'Package':      t.package_type     || '',
-      'Start Date':   t.start_date       || '',   // ExportCsv.js formats ISO → dd/mm/yyyy
-      'End Date':     t.end_date         || '',
-      'Adults':       t.number_of_adults  ?? '',
-      'Children':     t.number_of_children ?? '',
-      'Paid (INR)':   t.amount_paid       ?? '',
-      'Pending (INR)':t.amount_pending    ?? '',
-      'Tour Status':  t.status            || '',
-      'Notes':        t.notes             || '',
+      'Name':          c.full_name         || '',
+      'Contact':       c.contact_number    || '',
+      'WhatsApp':      c.whatsapp_number   || '',
+      'Email':         c.email_id          || '',
+      'City':          c.departure_city    || '',
+      'Follow-up':     c.follow_up_status  || '',
+      'Destination':   t.destination       || '',
+      'Package':       t.package_type      || '',
+      'Start Date':    t.start_date        || '',   // ExportCsv.js formats ISO → dd/mm/yyyy
+      'End Date':      t.end_date          || '',
+      'Adults':        t.number_of_adults   ?? '',
+      'Children':      t.number_of_children ?? '',
+      'Paid (INR)':    t.amount_paid        ?? '',
+      'Pending (INR)': t.amount_pending     ?? '',
+      'Tour Status':   t.status             || '',
+      'Notes':         t.notes              || '',
     };
   });
   exportCsv(rows, `customers-${new Date().toISOString().slice(0, 10)}`);
@@ -98,14 +71,11 @@ export default function CustomerManagement() {
   const { searchQuery = '' } = useOutletContext() || {};
 
   // ── Fetch all customers ───────────────────────────────────────────
+  // GET /api/customers  →  returns array of customer objects with nested tours
   const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('customers')
-        .select(CUSTOMER_SELECT)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
+      const data = await apiClient('/api/customers');
       setCustomers(data || []);
     } catch (err) {
       console.error('Fetch error:', err);
@@ -118,7 +88,7 @@ export default function CustomerManagement() {
 
   // ── Add customer ──────────────────────────────────────────────────
   // addCustomer() in customers.js inserts into customers AND tours tables
-  // and returns the full customer object (with nested tours) from Supabase.
+  // and returns the full customer object (with nested tours).
   const handleAddSubmit = async (custFields, tourFields) => {
     try {
       setAddError(null);
