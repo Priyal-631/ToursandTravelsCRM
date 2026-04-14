@@ -6,7 +6,6 @@ import Dashboard from './pages/Dashboard/Index';
 import ReportsPage from './pages/Dashboard/Reports/ReportsPage';
 import CustomerManagement from './pages/CustomerManagement/Index';
 import QueriesPage from './pages/Queries/index';
-import EnquiryForm from './pages/Public/EnquiryForm';
 
 export default function App() {
   return (
@@ -40,8 +39,6 @@ export default function App() {
         <Route path="/sales/reports" element={<ReportsPage />} />
         <Route path="/sales/queries" element={<QueriesPage />} />
       </Route>
-
-      <Route path="/enquiry" element={<EnquiryForm />} />
 
       {/* ── Fallback ────────────────────────────────────────────── */}
       <Route path="*" element={<Navigate to="/login" replace />} />

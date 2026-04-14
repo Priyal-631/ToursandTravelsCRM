@@ -89,11 +89,10 @@ export const sendReply = async (req, res) => {
 
     if (!query) return res.status(404).json({ error: 'Query not found' })
 
-    // Send email via Resend
     if (query.customer?.email_id) {
       try {
         await resend.emails.send({
-          from: 'onboarding@resend.dev', // Use your verified domain
+          from: 'onboarding@resend.dev',
           to: query.customer.email_id,
           subject: `Re: ${query.subject}`,
           html: `
@@ -116,11 +115,9 @@ export const sendReply = async (req, res) => {
         })
       } catch (emailError) {
         console.error('Resend email error:', emailError)
-        // Continue even if email fails - we still want to save the reply
       }
     }
 
-    // Update query with reply
     const updated = await prisma.query.update({
       where: { id },
       data: {
@@ -141,9 +138,8 @@ export const sendReply = async (req, res) => {
   }
 }
 
-// POST /api/public/enquiry  — No auth, creates Customer + Query together
+// POST /api/public/enquiry — No auth, creates Customer + Query together
 export const submitEnquiry = async (req, res) => {
-  // In submitEnquiry, replace the destructuring line with:
   const {
     name: full_name,
     email: email_id,
@@ -156,14 +152,13 @@ export const submitEnquiry = async (req, res) => {
     adults: number_of_adults,
     children: number_of_children,
     budget: budget_range,
-  } = req.body = req.body
+  } = req.body
 
   try {
     if (!full_name?.trim() || !message?.trim() || !subject?.trim()) {
       return res.status(400).json({ error: 'Name, subject, and message are required' })
     }
 
-    // 1. Upsert customer by email (or create new if no email)
     let customer = null
 
     if (email_id?.trim()) {
@@ -175,33 +170,32 @@ export const submitEnquiry = async (req, res) => {
     if (!customer) {
       customer = await prisma.customer.create({
         data: {
-          full_name: full_name.trim(),
-          contact_number: contact_number?.trim() || null,
-          whatsapp_number: whatsapp_number?.trim() || null,
-          email_id: email_id?.trim() || null,
-          departure_city: departure_city?.trim() || null,
+          full_name:          full_name.trim(),
+          contact_number:     contact_number?.trim()     || null,
+          whatsapp_number:    whatsapp_number?.trim()    || null,
+          email_id:           email_id?.trim()           || null,
+          departure_city:     departure_city?.trim()     || null,
           travel_destination: travel_destination?.trim() || null,
-          budget_range: budget_range ? parseFloat(budget_range) : null,
-          number_of_adults: parseInt(number_of_adults) || 1,
+          budget_range:       budget_range ? parseFloat(budget_range) : null,
+          number_of_adults:   parseInt(number_of_adults)  || 1,
           number_of_children: parseInt(number_of_children) || 0,
-          follow_up_status: 'New',
-          source_of_lead: 'Website',
+          follow_up_status:   'New',
+          source_of_lead:     'Website',
         }
       })
     }
 
-    // 2. Create the Query linked to customer
-    const query = await prisma.query.create({
+    const newQuery = await prisma.query.create({
       data: {
         customer_id: customer.id,
-        subject: subject.trim(),
-        message: message.trim(),
-        priority: priority || 'Medium',
-        status: 'Open',
+        subject:     subject.trim(),
+        message:     message.trim(),
+        priority:    'Medium',
+        status:      'Open',
       }
     })
 
-    res.status(201).json({ success: true, query_id: query.id })
+    res.status(201).json({ success: true, query_id: newQuery.id })
   } catch (err) {
     console.error('Submit enquiry error:', err)
     res.status(500).json({ error: 'Failed to submit enquiry' })
