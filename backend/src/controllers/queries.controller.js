@@ -143,12 +143,20 @@ export const sendReply = async (req, res) => {
 
 // POST /api/public/enquiry  — No auth, creates Customer + Query together
 export const submitEnquiry = async (req, res) => {
+  // In submitEnquiry, replace the destructuring line with:
   const {
-    full_name, contact_number, whatsapp_number, email_id,
-    departure_city, travel_destination, travel_month,
-    number_of_adults, number_of_children, budget_range,
-    subject, message, priority
-  } = req.body
+    name: full_name,
+    email: email_id,
+    phone: contact_number,
+    whatsapp: whatsapp_number,
+    destination: travel_destination,
+    departureCity: departure_city,
+    query: message,
+    subject,
+    adults: number_of_adults,
+    children: number_of_children,
+    budget: budget_range,
+  } = req.body = req.body
 
   try {
     if (!full_name?.trim() || !message?.trim() || !subject?.trim()) {
