@@ -41,10 +41,11 @@ export default function App() {
         <Route path="/sales/queries" element={<QueriesPage />} />
       </Route>
 
+      <Route path="/enquiry" element={<EnquiryForm />} />
+
       {/* ── Fallback ────────────────────────────────────────────── */}
       <Route path="*" element={<Navigate to="/login" replace />} />
       
-      <Route path="/enquiry" element={<EnquiryForm />} />
     </Routes>
   );
 }
