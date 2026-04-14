@@ -9,14 +9,21 @@ import stateRoutes   from './routes/states.routes.js'
 import countryRoutes from './routes/countries.routes.js'
 import queryRoutes   from './routes/queries.routes.js'    // NEW
 import profileRoutes from './routes/profile.routes.js'  // NEW
+import publicRoutes from './routes/public.routes.js'   
 
 const app = express()
 
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors({
+  origin: [
+    'http://localhost:5173',   // CRM (admin)
+    'http://localhost:5174',   // Public enquiry form
+  ]
+}))
 app.use(express.json())
 
 app.get('/', (req, res) => res.json({ message: 'Tours Backend running' }))
 
+app.use('/api/public', publicRoutes)
 app.use('/api/auth',      authRoutes)
 app.use('/api/customers', customerRoutes)
 app.use('/api/tours',     tourRoutes)
