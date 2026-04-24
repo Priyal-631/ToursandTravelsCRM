@@ -3,6 +3,8 @@ import { sendError, sendSuccess } from '../utils/http.js'
 import { serialize } from '../utils/serializers.js'
 import { validateCustomerPayload, validateTourPayload } from '../utils/validators.js'
 
+const LOST_STATUS = 'Lost'
+
 const customerInclude = {
   tours: {
     include: {
@@ -25,16 +27,181 @@ const customerInclude = {
   }
 }
 
+const hasQueryFilters = (query = {}) =>
+  ['search', 'status', 'location', 'fromDate', 'toDate', 'year', 'page', 'limit'].some((key) => query[key] !== undefined)
+
+const buildStatusWhere = (status) => {
+  if (status === 'Active') return { NOT: { follow_up_status: LOST_STATUS } }
+  if (status === 'Inactive') return { follow_up_status: LOST_STATUS }
+  return {}
+}
+
+const buildCustomerWhere = ({ search = '', status = 'All', location = '', fromDate = '', toDate = '', year = '' } = {}) => {
+  const clauses = []
+
+  if (search.trim()) {
+    clauses.push({
+      OR: [
+        { full_name: { contains: search.trim(), mode: 'insensitive' } },
+        { email_id: { contains: search.trim(), mode: 'insensitive' } },
+        { contact_number: { contains: search.trim() } }
+      ]
+    })
+  }
+
+  const statusWhere = buildStatusWhere(status)
+  if (Object.keys(statusWhere).length > 0) {
+    clauses.push(statusWhere)
+  }
+
+  if (location.trim()) {
+    clauses.push({
+      OR: [
+        { departure_city: { contains: location.trim(), mode: 'insensitive' } },
+        {
+          tours: {
+            some: {
+                OR: [
+                  { destination: { contains: location.trim(), mode: 'insensitive' } },
+                  { state: { is: { name: { contains: location.trim(), mode: 'insensitive' } } } },
+                  { country: { is: { name: { contains: location.trim(), mode: 'insensitive' } } } }
+                ]
+              }
+            }
+        }
+      ]
+    })
+  }
+
+  const tourDateFilters = {}
+  if (fromDate) {
+    tourDateFilters.gte = new Date(fromDate)
+  }
+  if (toDate) {
+    const inclusiveToDate = new Date(toDate)
+    inclusiveToDate.setHours(23, 59, 59, 999)
+    tourDateFilters.lte = inclusiveToDate
+  }
+
+  if (Object.keys(tourDateFilters).length > 0) {
+    clauses.push({
+      tours: {
+        some: {
+          start_date: tourDateFilters
+        }
+      }
+    })
+  }
+
+  if (year) {
+    const parsedYear = Number.parseInt(year, 10)
+    if (!Number.isNaN(parsedYear)) {
+      clauses.push({
+        tours: {
+          some: {
+            start_date: {
+              gte: new Date(parsedYear, 0, 1),
+              lt: new Date(parsedYear + 1, 0, 1)
+            }
+          }
+        }
+      })
+    }
+  }
+
+  return clauses.length > 0 ? { AND: clauses } : {}
+}
+
+const startOfCurrentMonth = () => {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), 1)
+}
+
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await prisma.customer.findMany({
-      orderBy: { created_at: 'desc' },
-      include: customerInclude
-    })
-    return sendSuccess(res, serialize(customers), 'Customers fetched successfully')
+    const {
+      search = '',
+      status = 'All',
+      location = '',
+      fromDate = '',
+      toDate = '',
+      year = ''
+    } = req.query
+    const where = buildCustomerWhere({ search, status, location, fromDate, toDate, year })
+
+    if (!hasQueryFilters(req.query)) {
+      const customers = await prisma.customer.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        include: customerInclude
+      })
+      return sendSuccess(res, serialize(customers), 'Customers fetched successfully')
+    }
+
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1)
+    const limit = Math.max(Number.parseInt(req.query.limit, 10) || 10, 1)
+    const skip = (page - 1) * limit
+
+    const [total, customers] = await Promise.all([
+      prisma.customer.count({ where }),
+      prisma.customer.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: limit,
+        include: customerInclude
+      })
+    ])
+
+    return sendSuccess(
+      res,
+      {
+        items: serialize(customers),
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.max(Math.ceil(total / limit), 1)
+        }
+      },
+      'Customers fetched successfully'
+    )
   } catch (err) {
     console.error('Get customers error:', err)
     return sendError(res, 'Failed to fetch customers', 500)
+  }
+}
+
+export const getCustomerStats = async (_req, res) => {
+  try {
+    const monthStart = startOfCurrentMonth()
+    const [totalCustomers, activeCustomers, inactiveCustomers, newThisMonth] =
+      await Promise.all([
+        prisma.customer.count(),
+        prisma.customer.count({ where: buildStatusWhere('Active') }),
+        prisma.customer.count({ where: buildStatusWhere('Inactive') }),
+        prisma.customer.count({
+          where: {
+            created_at: {
+              gte: monthStart
+            }
+          }
+        })
+      ])
+
+    return sendSuccess(
+      res,
+      {
+        totalCustomers,
+        activeCustomers,
+        inactiveCustomers,
+        newThisMonth
+      },
+      'Customer stats fetched successfully'
+    )
+  } catch (err) {
+    console.error('Get customer stats error:', err)
+    return sendError(res, 'Failed to fetch customer stats', 500)
   }
 }
 

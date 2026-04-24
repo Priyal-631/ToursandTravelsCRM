@@ -1,6 +1,21 @@
 import { apiClient } from './apiClient'
 
-export const getCustomers = () => apiClient('/api/customers')
+const toQueryString = (params = {}) => {
+  const searchParams = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return
+    searchParams.set(key, String(value))
+  })
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
+export const getCustomers = (params) =>
+  apiClient(`/api/customers${params ? toQueryString(params) : ''}`)
+
+export const getCustomerStats = () => apiClient('/api/customers/stats')
 
 export const createCustomer = (payload) =>
   apiClient('/api/customers', {
