@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   getCustomers,
+  getCustomerStats,
   getCustomerById,
   createCustomer,
   updateCustomer,
@@ -11,6 +12,7 @@ import { requireAdmin } from '../middleware/roleCheck.js'
 
 const router = Router()
 
+router.get('/stats', requireAuth, getCustomerStats)
 router.get('/', requireAuth, getCustomers)
 router.get('/:id', requireAuth, getCustomerById)
 router.post('/', requireAuth, requireAdmin, createCustomer)

@@ -1,5 +1,4 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { supabase } from '../api/supabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -8,66 +7,86 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔁 Load session on app start
   useEffect(() => {
-    // Check for existing session on load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for login/logout events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    checkAuth();
   }, []);
 
-  async function fetchProfile(userId) {
+  // -------------------------
+  // CHECK AUTH SESSION
+  // -------------------------
+  async function checkAuth() {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      setLoading(true);
 
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error.message);
+      const res = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include', // important for cookies
+      });
+
+      if (!res.ok) {
+        setUser(null);
+        setProfile(null);
+        return;
+      }
+
+      const data = await res.json();
+
+      setUser(data.user);
+      setProfile(data.profile);
+    } catch (err) {
+      console.error('Auth check failed:', err);
+      setUser(null);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
   }
 
+  // -------------------------
+  // LOGIN
+  // -------------------------
   async function login(email, password) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
     });
-    if (error) throw error;
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || 'Login failed');
+    }
+
+    const data = await res.json();
+
+    setUser(data.user);
+    setProfile(data.profile);
   }
 
+  // -------------------------
+  // LOGOUT
+  // -------------------------
   async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    setUser(null);
-    setProfile(null);
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      setUser(null);
+      setProfile(null);
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
   }
 
-  // Role helper booleans — use these throughout the app
+  // -------------------------
+  // ROLE HELPERS
+  // -------------------------
   const isAdmin = profile?.role === 'ADMIN';
   const isManager = profile?.role === 'MANAGER';
   const isExecutive = profile?.role === 'EXECUTIVE';
@@ -83,6 +102,7 @@ export function AuthProvider({ children }) {
     isManager,
     isExecutive,
     isAccounts,
+    refreshAuth: checkAuth,
   };
 
   return (
@@ -92,6 +112,9 @@ export function AuthProvider({ children }) {
   );
 }
 
+// -------------------------
+// HOOK
+// -------------------------
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

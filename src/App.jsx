@@ -1,49 +1,49 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./hooks/useAuth";
 
-import AdminLayout from './layouts/AdminLayout';
-import SalesLayout from './layouts/SalesLayout';
+import AdminLayout from "./layouts/AdminLayout";
+import SalesLayout from "./layouts/SalesLayout";
 
-import Login from './pages/Auth/Login';
-import Dashboard from './pages/Auth/Dashboard/Index';
-import Analytics from './pages/Auth/Analytics/index';
-import Unauthorized from './pages/Auth/Unauthorized';
+import Login from "./pages/Auth/Analytics/Login";
+import Unauthorized from "./pages/Auth/Analytics/Unauthorized";
+import Dashboard from "./pages/Auth/Dashboard/Index";
+import Analytics from "./pages/Auth/Analytics/index";
 
 export default function App() {
   const { user, profile, loading } = useAuth();
 
-  // Block all route rendering until Supabase session + profile are resolved
-  if (loading) return null;
+  if (loading) return <div>Loading...</div>;
 
   return (
     <Routes>
 
-      {/* ── Public ── */}
+      {/* Public */}
       <Route
         path="/login"
         element={!user ? <Login /> : <Navigate to="/" replace />}
       />
+
       <Route path="/unauthorized" element={<Unauthorized />} />
 
-      {/* ── Admin routes (Dashboard + Analytics) ── */}
+      {/* Admin */}
       <Route element={<AdminLayout />}>
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/analytics" element={<Analytics />} />
       </Route>
 
-      {/* ── Sales routes (Dashboard only) ── */}
+      {/* Sales */}
       <Route element={<SalesLayout />}>
-        <Route path="/sales/dashboard" element={<Dashboard />} />
+        <Route path="/sales/dashboard" element={<Analytics />} />
       </Route>
 
-      {/* ── Root redirect based on role ── */}
+      {/* Root redirect */}
       <Route
         path="/"
         element={
           !user
             ? <Navigate to="/login" replace />
-            : profile?.role === 'ADMIN'
-              ? <Navigate to="/admin/dashboard" replace />
+            : profile?.role === "ADMIN"
+              ? <Navigate to="/admin/analytics" replace />
               : <Navigate to="/sales/dashboard" replace />
         }
       />
