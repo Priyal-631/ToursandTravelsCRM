@@ -1,6 +1,10 @@
 import { prisma } from '../db.js'
 import { sendError, sendSuccess } from '../utils/http.js'
 import { serialize } from '../utils/serializers.js'
+import { Resend } from 'resend'
+
+// Initialize Resend with your API key
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 const queryInclude = {
   customer: {
@@ -85,6 +89,8 @@ export const createQuery = async (req, res) => {
       include: queryInclude
     })
 
+    // (Email logic removed from here)
+
     return sendSuccess(res, serialize(query), 'Query created successfully', 201)
   } catch (err) {
     console.error('Create query error:', err)
@@ -106,7 +112,7 @@ export const updateQuery = async (req, res) => {
     if (status !== undefined) updateData.status = status
     if (reply !== undefined) updateData.reply = reply
 
-    // ✅ FIXED: Handle assigned_to with proper relation syntax
+    // Handle assigned_to with proper relation syntax
     if (assigned_to !== undefined) {
       if (assigned_to === null) {
         // Disconnect the profile
@@ -128,11 +134,37 @@ export const updateQuery = async (req, res) => {
       updateData.replied_at = new Date()
     }
 
+    // 1. Save to database first
     const query = await prisma.query.update({
       where: { id },
       data: updateData,
       include: queryInclude
     })
+
+    // 2. Send email via Resend if a reply was provided
+    if (reply !== undefined && reply !== null && query.customer?.email_id) {
+      try {
+        await resend.emails.send({
+          from: 'Sukhi Travels <onboarding@resend.dev>', // Reminder: Only works for your own verified email until you add a domain to Resend
+          to: query.customer.email_id,
+          subject: `Re: ${query.subject}`,
+          html: `
+            <div style="font-family: sans-serif; color: #333;">
+              <p>Hi ${query.customer.full_name},</p>
+              <p>Thank you for reaching out regarding <strong>${query.subject}</strong>.</p>
+              <div style="padding: 12px; border-left: 4px solid #567C8D; background: #f9f9f9; margin: 20px 0;">
+                <p style="margin: 0; white-space: pre-wrap;">${reply}</p>
+              </div>
+              <p>Best regards,<br/><strong>The Sukhi Travels Team</strong></p>
+            </div>
+          `
+        })
+        console.log(`Email reply sent to ${query.customer.email_id}`)
+      } catch (emailError) {
+        console.error('Resend email failed:', emailError)
+        // We log the error but don't fail the request, so the DB update still succeeds
+      }
+    }
 
     return sendSuccess(res, serialize(query), 'Query updated successfully')
   } catch (err) {
@@ -154,7 +186,7 @@ export const deleteQuery = async (req, res) => {
   }
 }
 
-// ✅ NEW: Public enquiry endpoint (no auth required)
+// Public enquiry endpoint (no auth required)
 export const createPublicEnquiry = async (req, res) => {
   try {
     const {
@@ -173,7 +205,7 @@ export const createPublicEnquiry = async (req, res) => {
       subject
     } = req.body
 
-    // ✅ Validate required fields from form
+    // Validate required fields from form
     const errors = []
     if (!name || !name.trim()) errors.push('Full name is required')
     if (!email || !email.trim()) errors.push('Email ID is required')
@@ -184,7 +216,7 @@ export const createPublicEnquiry = async (req, res) => {
       return sendError(res, errors.join(', '), 400)
     }
 
-    // ✅ Create customer from form submission
+    // Create customer from form submission
     const customer = await prisma.customer.create({
       data: {
         full_name: name.trim(),
@@ -202,7 +234,7 @@ export const createPublicEnquiry = async (req, res) => {
       }
     })
 
-    // ✅ Create associated query/ticket
+    // Create associated query/ticket
     const query = await prisma.query.create({
       data: {
         customer: { connect: { id: customer.id } },

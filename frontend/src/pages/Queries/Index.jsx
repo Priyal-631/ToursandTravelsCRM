@@ -108,31 +108,6 @@ function ReplyModal({ query, saving, error, onClose, onSend }) {
   );
 }
 
-function CreateQueryModal({ open, customers, profiles, saving, error, onClose, onCreate }) {
-  const [form, setForm] = useState({ customer_id: '', subject: '', message: '', priority: 'Medium', status: 'Open', assigned_to: '' });
-  useEffect(() => { if (open) setForm({ customer_id: '', subject: '', message: '', priority: 'Medium', status: 'Open', assigned_to: '' }); }, [open]);
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
-        <div className="border-b border-gray-100 px-6 py-4"><h2 className="text-lg font-semibold text-gray-900">Add Query</h2></div>
-        <div className="space-y-4 px-6 py-5">
-          {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-          <label className="block text-xs font-medium text-gray-600">Customer<select className="mt-1 h-9 w-full rounded-md border border-gray-200 px-3 text-sm" value={form.customer_id} onChange={(e) => setForm((p) => ({ ...p, customer_id: e.target.value }))}><option value="">Select customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.full_name}</option>)}</select></label>
-          <label className="block text-xs font-medium text-gray-600">Subject<input className="mt-1 h-9 w-full rounded-md border border-gray-200 px-3 text-sm" value={form.subject} onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))} /></label>
-          <label className="block text-xs font-medium text-gray-600">Message<textarea className="mt-1 min-h-24 w-full rounded-md border border-gray-200 px-3 py-2 text-sm" value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} /></label>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <label className="block text-xs font-medium text-gray-600">Priority<select className="mt-1 h-9 w-full rounded-md border border-gray-200 px-3 text-sm" value={form.priority} onChange={(e) => setForm((p) => ({ ...p, priority: e.target.value }))}>{['High', 'Medium', 'Low'].map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-            <label className="block text-xs font-medium text-gray-600">Status<select className="mt-1 h-9 w-full rounded-md border border-gray-200 px-3 text-sm" value={form.status} onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}>{['Open', 'Contacted', 'In Progress', 'Closed'].map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-            <label className="block text-xs font-medium text-gray-600">Assigned To<select className="mt-1 h-9 w-full rounded-md border border-gray-200 px-3 text-sm" value={form.assigned_to} onChange={(e) => setForm((p) => ({ ...p, assigned_to: e.target.value }))}><option value="">Unassigned</option>{profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.full_name || profile.email}</option>)}</select></label>
-          </div>
-        </div>
-        <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4"><button onClick={onClose} className="px-4 py-2 text-sm text-gray-600" disabled={saving}>Cancel</button><button onClick={() => onCreate(form)} disabled={saving} className="rounded-md bg-[#2F4156] px-4 py-2 text-sm font-medium text-white hover:bg-[#253548] disabled:opacity-50">{saving ? 'Creating...' : 'Create Query'}</button></div>
-      </div>
-    </div>
-  );
-}
-
 export default function QueriesPage() {
   const { searchQuery = '' } = useOutletContext() || {};
   const { isAdmin } = useAuth();
@@ -142,7 +117,6 @@ export default function QueriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [replyError, setReplyError] = useState('');
-  const [createError, setCreateError] = useState('');
   const [saving, setSaving] = useState(false);
   const [replyTarget, setReplyTarget] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -201,19 +175,6 @@ export default function QueriesPage() {
     }
   };
 
-  const handleCreate = async (form) => {
-    try {
-      setSaving(true);
-      setCreateError('');
-      const created = await createQuery({ ...form, assigned_to: form.assigned_to || null });
-      setQueries((prev) => [normalize(created), ...prev]);
-      setShowCreate(false);
-    } catch (err) {
-      setCreateError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const th = 'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
 
@@ -222,13 +183,26 @@ export default function QueriesPage() {
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0 w-full min-w-0">
         <div className="flex items-start justify-between gap-4">
           <div><h1 className="text-xl font-bold text-gray-900 leading-tight">Query Management</h1><p className="text-gray-500 text-xs mt-0.5">Manage and respond to customer queries</p></div>
-          <button onClick={() => { setCreateError(''); setShowCreate(true); }} className="inline-flex items-center gap-2 rounded-md bg-[#2F4156] px-4 py-2 text-sm font-medium text-white hover:bg-[#253548]"><Plus className="h-4 w-4" />Add Query</button>
         </div>
         {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         <div className="flex items-center gap-3 flex-wrap">
           <Dropdown value={filterPriority} options={['All Priority', 'High', 'Medium', 'Low']} onChange={setFilterPriority} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 cursor-pointer hover:border-gray-300" />
           <Dropdown value={filterStatus} options={['All Status', 'Open', 'Contacted', 'In Progress', 'Closed']} onChange={setFilterStatus} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 cursor-pointer hover:border-gray-300" />
           <Dropdown value={filterMember} options={['All Members', ...profiles.map((profile) => profile.full_name || profile.email)]} onChange={setFilterMember} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 cursor-pointer hover:border-gray-300" />
+          
+          {/* ✅ NEW: Clear Filters Button */}
+          {(filterPriority !== 'All Priority' || filterStatus !== 'All Status' || filterMember !== 'All Members') && (
+            <button 
+              onClick={() => {
+                setFilterPriority('All Priority');
+                setFilterStatus('All Status');
+                setFilterMember('All Members');
+              }} 
+              className="text-sm font-medium text-gray-400 hover:text-red-500 transition-colors px-2 underline underline-offset-2"
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
           <table className="w-full">
@@ -253,7 +227,6 @@ export default function QueriesPage() {
         </div>
       </div>
       <ReplyModal query={replyTarget} saving={saving} error={replyError} onClose={() => setReplyTarget(null)} onSend={handleReply} />
-      <CreateQueryModal open={showCreate} customers={customers} profiles={profiles} saving={saving} error={createError} onClose={() => setShowCreate(false)} onCreate={handleCreate} />
     </div>
   );
 }
