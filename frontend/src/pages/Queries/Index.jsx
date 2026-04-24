@@ -17,25 +17,71 @@ function useClickAway(ref, onClose) {
   }, [ref, onClose]);
 }
 
+// FIXED: Complete rewrite of Dropdown component
 function Dropdown({ value, options, onChange, className }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useClickAway(ref, () => setOpen(false));
+  
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(!open)} className={className}>
+      <button 
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(!open);
+        }} 
+        className={className}
+      >
         {value}
         <svg className="w-3 h-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
       </button>
       {open && (
         <div className="absolute z-50 mt-1 min-w-[140px] rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
           {options.map((option) => (
-            <button key={option} onClick={() => { onChange(option); setOpen(false); }} className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-blue-50 ${option === value ? 'bg-blue-50 font-semibold text-[#2F4156]' : 'text-gray-700'}`}>
+            <button 
+              key={option}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange(option);
+                setOpen(false);
+              }} 
+              className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-blue-50 ${option === value ? 'bg-blue-50 font-semibold text-[#2F4156]' : 'text-gray-700'}`}
+            >
               {option === value ? <span className="text-[#567C8D]">✓</span> : <span className="w-4" />}
               {option}
             </button>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+// FIXED: MessageCell now properly handles state changes
+function MessageCell({ message }) {
+  const [expanded, setExpanded] = useState(false);
+  const needsExpand = message && message.length > 60;
+  const displayText = expanded ? message : (needsExpand ? message.slice(0, 60) + '...' : message);
+
+  return (
+    <div className="text-sm text-gray-600">
+      <p className="whitespace-normal break-words">{displayText}</p>
+      {needsExpand && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setExpanded(!expanded);
+          }}
+          className="text-xs text-blue-500 hover:text-blue-700 mt-1 font-medium"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
       )}
     </div>
   );
@@ -180,9 +226,9 @@ export default function QueriesPage() {
         </div>
         {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         <div className="flex items-center gap-3 flex-wrap">
-          <Dropdown value={filterPriority} options={['All Priority', 'High', 'Medium', 'Low']} onChange={setFilterPriority} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700" />
-          <Dropdown value={filterStatus} options={['All Status', 'Open', 'Contacted', 'In Progress', 'Closed']} onChange={setFilterStatus} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700" />
-          <Dropdown value={filterMember} options={['All Members', ...profiles.map((profile) => profile.full_name || profile.email)]} onChange={setFilterMember} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700" />
+          <Dropdown value={filterPriority} options={['All Priority', 'High', 'Medium', 'Low']} onChange={setFilterPriority} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 cursor-pointer hover:border-gray-300" />
+          <Dropdown value={filterStatus} options={['All Status', 'Open', 'Contacted', 'In Progress', 'Closed']} onChange={setFilterStatus} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 cursor-pointer hover:border-gray-300" />
+          <Dropdown value={filterMember} options={['All Members', ...profiles.map((profile) => profile.full_name || profile.email)]} onChange={setFilterMember} className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 cursor-pointer hover:border-gray-300" />
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
           <table className="w-full">
@@ -192,14 +238,14 @@ export default function QueriesPage() {
                 <tr key={query.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-4 py-4"><span className="font-semibold text-[#2F4156] text-sm">{query.customer}</span></td>
                   <td className="px-4 py-4 text-sm text-gray-700">{query.subject}</td>
-                  <td className="px-4 py-4 max-w-[200px]"><MessageCell message={query.message} /></td>
+                  <td className="px-4 py-4 max-w-[250px]"><MessageCell message={query.message} /></td>
                   <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{query.date}</td>
-                  <td className="px-4 py-4"><Dropdown value={query.priority} options={['High', 'Medium', 'Low']} onChange={(value) => updateLocal(query.id, { priority: value })} className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${PRIORITY_COLORS[query.priority] || PRIORITY_COLORS.Medium}`} /></td>
-                  <td className="px-4 py-4"><Dropdown value={query.status} options={['Open', 'Contacted', 'In Progress', 'Closed']} onChange={(value) => updateLocal(query.id, { status: value })} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLORS[query.status] || 'text-gray-500 border border-gray-200 bg-gray-50'}`} /></td>
-                  <td className="px-4 py-4"><Dropdown value={query.assigned} options={['Unassigned', ...profiles.map((profile) => profile.full_name || profile.email)]} onChange={(label) => updateLocal(query.id, { assigned_to: assigneeId(label) })} className="flex items-center gap-1 rounded-full border border-[#ddd4cc] bg-[#F5EFEB] px-3 py-1 text-xs font-medium text-[#2F4156]" /></td>
-                  <td className="px-4 py-4">{query.replied ? <span className="flex items-center gap-1.5 text-sm text-gray-300 cursor-not-allowed select-none"><MessageSquare className="w-4 h-4" /><span>Reply</span></span> : <button type="button" onClick={() => { setReplyError(''); setReplyTarget(query); }} className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#567C8D]"><MessageSquare className="w-4 h-4" /><span>Reply</span></button>}</td>
-                  <td className="px-4 py-4 text-center">{query.replied ? <span className="mx-auto flex h-5 w-5 items-center justify-center rounded-full bg-[#567C8D] text-white">✓</span> : <span className="mx-auto flex h-5 w-5 rounded-full border-2 border-gray-300" />}</td>
-                  {isAdmin && <td className="px-4 py-4"><button onClick={async () => { if (!window.confirm('Delete this query?')) return; try { await deleteQuery(query.id); setQueries((prev) => prev.filter((item) => item.id !== query.id)); } catch (err) { setError(err.message); } }} className="text-sm text-gray-600 hover:text-red-600">Delete</button></td>}
+                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}><Dropdown value={query.priority} options={['High', 'Medium', 'Low']} onChange={(value) => updateLocal(query.id, { priority: value })} className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold cursor-pointer ${PRIORITY_COLORS[query.priority] || PRIORITY_COLORS.Medium}`} /></td>
+                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}><Dropdown value={query.status} options={['Open', 'Contacted', 'In Progress', 'Closed']} onChange={(value) => updateLocal(query.id, { status: value })} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold cursor-pointer ${STATUS_COLORS[query.status] || 'text-gray-500 border border-gray-200 bg-gray-50'}`} /></td>
+                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}><Dropdown value={query.assigned} options={['Unassigned', ...profiles.map((profile) => profile.full_name || profile.email)]} onChange={(label) => updateLocal(query.id, { assigned_to: assigneeId(label) })} className="flex items-center gap-1 rounded-full border border-[#ddd4cc] bg-[#F5EFEB] px-3 py-1 text-xs font-medium text-[#2F4156] cursor-pointer" /></td>
+                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>{query.replied ? <span className="flex items-center gap-1.5 text-sm text-gray-300 cursor-not-allowed select-none"><MessageSquare className="w-4 h-4" /><span>Reply</span></span> : <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReplyError(''); setReplyTarget(query); }} className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#567C8D] transition-colors"><MessageSquare className="w-4 h-4" /><span>Reply</span></button>}</td>
+                  <td className="px-4 py-4 text-center">{query.replied ? <span className="mx-auto flex h-5 w-5 items-center justify-center rounded-full bg-[#567C8D] text-white text-xs">✓</span> : <span className="mx-auto flex h-5 w-5 rounded-full border-2 border-gray-300" />}</td>
+                  {isAdmin && <td className="px-4 py-4"><button type="button" onClick={async () => { if (!window.confirm('Delete this query?')) return; try { await deleteQuery(query.id); setQueries((prev) => prev.filter((item) => item.id !== query.id)); } catch (err) { setError(err.message); } }} className="text-sm text-gray-600 hover:text-red-600">Delete</button></td>}
                 </tr>
               ))}
             </tbody>

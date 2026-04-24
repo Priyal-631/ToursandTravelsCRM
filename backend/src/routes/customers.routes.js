@@ -1,20 +1,25 @@
 import { Router } from 'express'
 import {
-  getCustomers,
-  getCustomerById,
-  createCustomer,
-  updateCustomer,
-  deleteCustomer
-} from '../controllers/customers.controller.js'
+  createQuery,
+  deleteQuery,
+  getQueries,
+  getQueryById,
+  updateQuery,
+  createPublicEnquiry // ✅ ADD THIS
+} from '../controllers/queries.controller.js'
 import { requireAuth } from '../middleware/auth.js'
-import { requireAdmin } from '../middleware/roleCheck.js'
+import { requireAdmin, requireSales } from '../middleware/roleCheck.js'
 
 const router = Router()
 
-router.get('/', requireAuth, getCustomers)
-router.get('/:id', requireAuth, getCustomerById)
-router.post('/', requireAuth, requireAdmin, createCustomer)
-router.put('/:id', requireAuth, requireAdmin, updateCustomer)
-router.delete('/:id', requireAuth, requireAdmin, deleteCustomer)
+// Protected routes (requires authentication)
+router.get('/', requireAuth, requireSales, getQueries)
+router.get('/:id', requireAuth, requireSales, getQueryById)
+router.post('/', requireAuth, requireSales, createQuery)
+router.put('/:id', requireAuth, requireSales, updateQuery)
+router.delete('/:id', requireAuth, requireAdmin, deleteQuery)
+
+// ✅ PUBLIC ROUTE - No authentication required
+router.post('/public/enquiry', createPublicEnquiry)
 
 export default router
