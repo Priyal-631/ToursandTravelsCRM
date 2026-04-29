@@ -91,33 +91,19 @@ model Tour {
 }
 
 model Query {
-  id              String            @id @default(uuid())
-  customer_id     String
-  subject         String
-  message         String
-  priority        String            @default("Medium")
-  status          String            @default("Open")
-  assigned_to     String?
-  reply           String?
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @default(now()) @updatedAt
-  replied_at      DateTime?
-  assignedTo      Profile?          @relation("AssignedQueries", fields: [assigned_to], references: [id])
-  customer        Customer          @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  QueryAttachment QueryAttachment[]
-}
-
-model QueryAttachment {
-  id         String   @id
-  query_id   String
-  file_name  String
-  file_url   String
-  file_size  Int
-  mime_type  String
-  created_at DateTime @default(now())
-  Query      Query    @relation(fields: [query_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([query_id])
+  id          String    @id @default(uuid())
+  customer_id String
+  subject     String
+  message     String
+  priority    String    @default("Medium")
+  status      String    @default("Open")
+  assigned_to String?
+  reply       String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
+  replied_at  DateTime?
+  assignedTo  Profile?  @relation("AssignedQueries", fields: [assigned_to], references: [id])
+  customer    Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 }
 
 enum Role {

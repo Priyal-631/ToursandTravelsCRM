@@ -23,7 +23,6 @@ const queryInclude = {
       role: true
     }
   },
-  QueryAttachment: true
 }
 
 export const getQueries = async (req, res) => {

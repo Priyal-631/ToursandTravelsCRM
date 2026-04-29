@@ -9,6 +9,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 function Logo({ isCollapsed }) {
   return (
@@ -25,16 +26,26 @@ function Logo({ isCollapsed }) {
   )
 }
 
-// ── Update paths to match App.jsx routes ──────────────────────────────
-const menuItems = [
+// Admin menu
+const adminMenuItems = [
   { label: "Dashboard", path: "/admin/dashboard", icon: Home },
   { label: "Reports",   path: "/admin/reports",   icon: ChartColumn },
   { label: "Customers", path: "/admin/customers", icon: Users },
   { label: "Queries",   path: "/admin/queries",   icon: MessageSquare },
 ]
 
+// Sales menu (MANAGER, EXECUTIVE, ACCOUNTS)
+const salesMenuItems = [
+  { label: "Reports", path: "/sales/reports", icon: ChartColumn },
+  { label: "Queries", path: "/sales/queries", icon: MessageSquare },
+]
+
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const { isAdmin } = useAuth()
+
+  // Choose menu based on role
+  const menuItems = isAdmin ? adminMenuItems : salesMenuItems
 
   return (
     <aside

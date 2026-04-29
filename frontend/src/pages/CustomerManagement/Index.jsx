@@ -102,18 +102,7 @@ function CustomerModal({ open, customer, profiles, states, countries, tourTypes,
               <label className="block text-xs font-medium text-gray-600">Email<Input type="email" value={form.email_id || ''} onChange={(event) => setForm((current) => ({ ...current, email_id: event.target.value }))} /></label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block text-xs font-medium text-gray-600">Departure City<Input value={form.departure_city || ''} onChange={(event) => setForm((current) => ({ ...current, departure_city: event.target.value }))} /></label>
-                <label className="block text-xs font-medium text-gray-600">Assigned To
-                  <select className="mt-1 h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-sm" value={form.assigned_to || ''} onChange={(event) => setForm((current) => ({ ...current, assigned_to: event.target.value }))}>
-                    <option value="">Unassigned</option>
-                    {profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.full_name || profile.email}</option>)}
-                  </select>
-                </label>
               </div>
-              <label className="block text-xs font-medium text-gray-600">Follow-up Status
-                <select className="mt-1 h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-sm" value={form.follow_up_status || 'New'} onChange={(event) => setForm((current) => ({ ...current, follow_up_status: event.target.value }))}>
-                  {['New', 'Contacted', 'Interested', 'Converted', 'Lost'].map((status) => <option key={status} value={status}>{status}</option>)}
-                </select>
-              </label>
               <label className="block text-xs font-medium text-gray-600">Notes<textarea className="mt-1 min-h-24 w-full rounded-md border border-gray-200 px-3 py-2 text-sm" value={form.follow_up_notes || ''} onChange={(event) => setForm((current) => ({ ...current, follow_up_notes: event.target.value }))} /></label>
             </div>
             <div className="space-y-3">
@@ -464,7 +453,7 @@ export default function CustomerManagementPage() {
           <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                {['Customer', 'Contact', 'Destination', 'Assigned To', 'Status', 'Revenue', 'Actions'].map((title) => (
+                {['Customer', 'Contact', 'Destination', 'Status', 'Revenue', 'Actions'].map((title) => (
                   <th key={title} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{title}</th>
                 ))}
               </tr>
@@ -480,7 +469,6 @@ export default function CustomerManagementPage() {
                     <td className="px-4 py-4"><div className="text-sm font-medium text-gray-900">{customer.full_name}</div><div className="text-xs text-gray-400">{customer.departure_city || 'City not set'}</div></td>
                     <td className="px-4 py-4"><div className="text-sm text-gray-700">{customer.contact_number || '-'}</div><div className="text-xs text-gray-400">{customer.email_id || '-'}</div></td>
                     <td className="px-4 py-4"><div className="text-sm text-gray-700">{customer.tours?.[0]?.destination || 'No tour'}</div><div className="text-xs text-gray-400">{customer.tours?.[0]?.tour_type?.name || '-'}</div></td>
-                    <td className="px-4 py-4 text-sm text-gray-700">{customer.assignedProfile?.full_name || 'Unassigned'}</td>
                     <td className="px-4 py-4 text-sm text-gray-700">
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${customer.follow_up_status === 'Lost' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                         {customer.follow_up_status === 'Lost' ? 'Inactive' : 'Active'}
