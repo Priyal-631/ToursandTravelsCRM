@@ -42,48 +42,48 @@ export default function EnquiryForm() {
   };
 
   const handleSubmit = async () => {
-  const e = validate();
-  if (Object.keys(e).length) { setErrors(e); return; }
-
-  setLoading(true);
-  try {
-    const response = await fetch(`${BASE_URL}/api/queries/public/enquiry`, { 
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        whatsapp: form.whatsapp.trim() || form.phone.trim(),
-        destination: form.destination.trim(),
-        travelMonth: form.travelMonth,
-        departureCity: form.departureCity.trim(),
-        budget: form.budget,
-        query: form.query.trim(),
-        totalTravellers: form.totalTravellers,
-        adults: form.adults,
-        children: form.children,
-        subject: form.destination ? `Trip Enquiry: ${form.destination.trim()}` : 'Travel Enquiry',
-      })
-    });
-
-    const data = await response.json();
-
-    // ✅ Check backend response format
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Submission failed');
+    const e = validate();
+    if (Object.keys(e).length) { setErrors(e); return; }
+  
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/api/queries/public/enquiry`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          whatsapp: form.whatsapp.trim() || form.phone.trim(),
+          destination: form.destination.trim(),
+          travelMonth: form.travelMonth,
+          departureCity: form.departureCity.trim(),
+          budget: form.budget,
+          query: form.query.trim(),
+          totalTravellers: parseInt(form.totalTravellers) || 1, // Convert to number
+          adults: parseInt(form.adults) || 1, // Convert to number
+          children: parseInt(form.children) || 0, // Convert to number
+          subject: form.destination ? `Trip Enquiry: ${form.destination.trim()}` : 'Travel Enquiry',
+        })
+      });
+  
+      const data = await response.json();
+  
+      // Check both HTTP status and backend success flag
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Submission failed');
+      }
+  
+      setSubmitted(true);
+      setForm(INITIAL);
+      setErrors({});
+      setSameAsMobile(false);
+    } catch (err) {
+      setErrors({ _global: err.message || 'Something went wrong. Please try again.' });
+    } finally {
+      setLoading(false);
     }
-
-    setSubmitted(true);
-    setForm(INITIAL);
-    setErrors({});
-    setSameAsMobile(false);
-  } catch (err) {
-    setErrors({ _global: err.message || 'Something went wrong. Please try again.' });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleSameAsMobile = (checked) => {
     setSameAsMobile(checked);
