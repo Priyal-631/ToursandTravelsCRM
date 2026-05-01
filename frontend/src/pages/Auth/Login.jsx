@@ -3,23 +3,26 @@ import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function Login() {
-  const { login, user, profile, isAdmin } = useAuth();
+  const { login, user, profile, loading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Once both user AND profile are loaded, redirect based on role
   if (user && profile) {
-    if (isAdmin) return <Navigate to="/admin/dashboard" replace />;
+    // Check role BEFORE checking isAdmin helper
+    if (profile.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
+    if (profile.role === 'MANAGER') return <Navigate to="/manager/queries" replace />;
+    // EXECUTIVE, ACCOUNTS, or any other sales role
     return <Navigate to="/sales/reports" replace />;
   }
 
   async function handleLogin(e) {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       await login(email, password);
@@ -28,7 +31,7 @@ export default function Login() {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -71,10 +74,10 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={loading}
-            style={loading ? styles.buttonDisabled : styles.button}
+            disabled={isLoading}
+            style={isLoading ? styles.buttonDisabled : styles.button}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
       </div>

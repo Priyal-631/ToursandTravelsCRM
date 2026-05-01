@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from './layouts/AdminLayout';
 import SalesLayout from './layouts/SalesLayout';
+import ManagerLayout from './layouts/ManagerLayout';
 import Login from './pages/Auth/Login';
 import Dashboard from "./pages/Dashboard/Index"; 
 import ReportsPage from './pages/Dashboard/Reports/ReportsPage';
@@ -18,6 +19,7 @@ export default function App() {
         element={<div style={{ padding: '2rem' }}>You are not authorized to view this page.</div>}
       />
 
+      {/* Admin Layout */}
       <Route element={<AdminLayout />}>
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/customers" element={<CustomerManagementPage />} />
@@ -25,6 +27,12 @@ export default function App() {
         <Route path="/admin/queries"   element={<QueriesPage />} />
       </Route>
 
+      {/* Manager Layout - Query module only */}
+      <Route element={<ManagerLayout />}>
+        <Route path="/manager/queries" element={<QueriesPage />} />
+      </Route>
+
+      {/* Sales Layout - Reports & Queries */}
       <Route element={<SalesLayout />}>
         <Route path="/sales/reports" element={<ReportsPage />} />
         <Route path="/sales/queries" element={<QueriesPage />} />

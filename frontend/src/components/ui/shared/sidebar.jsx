@@ -34,7 +34,12 @@ const adminMenuItems = [
   { label: "Queries",   path: "/admin/queries",   icon: MessageSquare },
 ]
 
-// Sales menu (MANAGER, EXECUTIVE, ACCOUNTS)
+// Manager menu - Query module only
+const managerMenuItems = [
+  { label: "Queries", path: "/manager/queries", icon: MessageSquare },
+]
+
+// Sales menu (EXECUTIVE, ACCOUNTS)
 const salesMenuItems = [
   { label: "Reports", path: "/sales/reports", icon: ChartColumn },
   { label: "Queries", path: "/sales/queries", icon: MessageSquare },
@@ -42,10 +47,17 @@ const salesMenuItems = [
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const { isAdmin } = useAuth()
+  const { isAdmin, profile } = useAuth()
 
   // Choose menu based on role
-  const menuItems = isAdmin ? adminMenuItems : salesMenuItems
+  let menuItems = []
+  if (isAdmin) {
+    menuItems = adminMenuItems
+  } else if (profile?.role === 'MANAGER') {
+    menuItems = managerMenuItems
+  } else {
+    menuItems = salesMenuItems
+  }
 
   return (
     <aside

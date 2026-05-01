@@ -14,10 +14,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// ── searchQuery + onSearchChange are now controlled from AdminLayout ─
+// ── searchQuery + onSearchChange are now controlled from layout ─
 export default function Topbar({ searchQuery = "", onSearchChange, showSearch = true }) {
-  const { logout } = useAuth();
+  const { logout, profile } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Get initials from profile name
+  const getInitials = () => {
+    if (!profile?.full_name) return "U";
+    return profile.full_name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Get role display name
+  const getRoleDisplay = () => {
+    if (!profile?.role) return "User";
+    const roleMap = {
+      ADMIN: "Admin",
+      MANAGER: "Manager",
+      EXECUTIVE: "Executive",
+      ACCOUNTS: "Accounts",
+    };
+    return roleMap[profile.role] || profile.role;
+  };
 
   const handleLogout = async () => {
     try {
@@ -31,10 +54,11 @@ export default function Topbar({ searchQuery = "", onSearchChange, showSearch = 
   };
 
   return (
-    <header className={`h-14 bg-white border-b border-gray-200 flex items-center px-6 gap-4 ${
-      showSearch ? "justify-between" : "justify-end"
-    }`}>
-
+    <header
+      className={`h-14 bg-white border-b border-gray-200 flex items-center px-6 gap-4 ${
+        showSearch ? "justify-between" : "justify-end"
+      }`}
+    >
       {/* Search Bar */}
       {showSearch && (
         <div className="flex-1 max-w-sm">
@@ -53,7 +77,6 @@ export default function Topbar({ searchQuery = "", onSearchChange, showSearch = 
 
       {/* Right: Bell + Avatar */}
       <div className="flex items-center gap-3">
-
         {/* Notification Bell */}
         <Button
           variant="ghost"
@@ -75,14 +98,21 @@ export default function Topbar({ searchQuery = "", onSearchChange, showSearch = 
             >
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">
-                  AD
+                  {getInitials()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium text-gray-700">Admin</span>
+              <span className="text-sm font-medium text-gray-700">
+                {getRoleDisplay()}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel className="text-xs text-gray-500">My Account</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs text-gray-500">
+              {profile?.full_name || "User"}
+            </DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs text-gray-400">
+              {profile?.email}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
@@ -96,7 +126,6 @@ export default function Topbar({ searchQuery = "", onSearchChange, showSearch = 
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
       </div>
     </header>
   );
