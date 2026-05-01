@@ -42,50 +42,48 @@ export default function EnquiryForm() {
   };
 
   const handleSubmit = async () => {
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
+  const e = validate();
+  if (Object.keys(e).length) { setErrors(e); return; }
 
-    setLoading(true);
-    try {
-        // ✅ FIXED: Updated endpoint to /api/queries/public/enquiry
-        const response = await fetch(`${BASE_URL}/api/queries/public/enquiry`, { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // ✅ FIXED: Field names match backend schema
-          name: form.name.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim(),
-          whatsapp: form.whatsapp.trim() || form.phone.trim(),
-          destination: form.destination.trim(),
-          travelMonth: form.travelMonth,
-          departureCity: form.departureCity.trim(),
-          budget: form.budget,
-          query: form.query.trim(),
-          totalTravellers: form.totalTravellers,
-          adults: form.adults,
-          children: form.children,
-          subject: form.destination ? `Trip Enquiry: ${form.destination.trim()}` : 'Travel Enquiry',
-        })
-      });
+  setLoading(true);
+  try {
+    const response = await fetch(`${BASE_URL}/api/queries/public/enquiry`, { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        whatsapp: form.whatsapp.trim() || form.phone.trim(),
+        destination: form.destination.trim(),
+        travelMonth: form.travelMonth,
+        departureCity: form.departureCity.trim(),
+        budget: form.budget,
+        query: form.query.trim(),
+        totalTravellers: form.totalTravellers,
+        adults: form.adults,
+        children: form.children,
+        subject: form.destination ? `Trip Enquiry: ${form.destination.trim()}` : 'Travel Enquiry',
+      })
+    });
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || err.error || 'Submission failed');
-      }
+    const data = await response.json();
 
-      const data = await response.json();
-      
-      setSubmitted(true);
-      setForm(INITIAL);
-      setErrors({});
-      setSameAsMobile(false);
-    } catch (err) {
-      setErrors({ _global: err.message || 'Something went wrong. Please try again.' });
-    } finally {
-      setLoading(false);
+    // ✅ Check backend response format
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Submission failed');
     }
-  };
+
+    setSubmitted(true);
+    setForm(INITIAL);
+    setErrors({});
+    setSameAsMobile(false);
+  } catch (err) {
+    setErrors({ _global: err.message || 'Something went wrong. Please try again.' });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSameAsMobile = (checked) => {
     setSameAsMobile(checked);
