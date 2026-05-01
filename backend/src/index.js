@@ -14,7 +14,7 @@ import { sendSuccess } from './utils/http.js'
 
 const app = express()
 
-const configuredOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
+const configuredOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173,https://sukhitravelscrm.onrender.com')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean)
